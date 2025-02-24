@@ -1,6 +1,5 @@
 import '../styles/global.css'
 import axios from "axios";
-import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import IFormInputSignUp from "./Repositories/IFormInputSignUp";
@@ -24,7 +23,7 @@ const SignUp = () => {
             navigate('/home');
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                console.log('Registration failed:', error.message);
+                console.log('Axios Registration failed:', error.message);
             } else {
                 console.log('Registration failed:', error);
             }
@@ -73,16 +72,10 @@ const SignUp = () => {
                     {errors.Tz && <span>{errors.Tz.message}</span>}
                 </div>
 
-                <div>
-                    <label htmlFor="Id">id </label>
-                    <input id="Id" {...register('Id')} />
-                    {errors.Id && <span>{errors.Id.message}</span>}
-                </div>
-
                 <button type="submit">Submit</button>
             </form>
         </div>
-    );
+    )
 }
 
 export default SignUp;

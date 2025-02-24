@@ -4,6 +4,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import IFormInput from './Repositories/IFormInput';
 import IFormInputSignUp from './Repositories/IFormInputSignUp';
 import { useNavigate } from 'react-router-dom';
+import Recipes from './Recipes';
 
 
 const Login = () => {
@@ -54,6 +55,8 @@ const Login = () => {
                     {errors.password && <span>This field is required</span>}
                 </div>
                 <button type="submit">Login</button>
+
+                <Recipes/> {/*להוציא את זה זה לא המקום*/ }
             </form>
         </div>
     );

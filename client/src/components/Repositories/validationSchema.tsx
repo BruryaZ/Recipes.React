@@ -20,8 +20,7 @@ const validationSchema = Yup.object().shape({
         .required('ID number is required')
         .matches(/^[0-9]+$/, 'ID number must be digits only')
         .min(9, 'ID number must be at least 9 digits long'),
-    Id: Yup.number()
-        .required('ID is required')
+    Id: Yup.number().optional()
 });
 
 export default validationSchema;

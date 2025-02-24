@@ -5,7 +5,7 @@ type IFormInputSignUp ={
     Username: string,
     Email: string,
     Tz: string,
-    Id: number
+    Id?: number
 }
 
 export default IFormInputSignUp;
