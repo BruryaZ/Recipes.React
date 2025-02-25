@@ -1,8 +1,8 @@
 import '../styles/global.css'
 import axios from 'axios';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import IFormInput from './Repositories/IFormInput';
-import IFormInputSignUp from './Repositories/IFormInputSignUp';
+import IFormInput from '../repositories/IFormInput';
+import IFormInputSignUp from '../repositories/IFormInputSignUp';
 import { useNavigate } from 'react-router-dom';
 import Recipes from './Recipes';
 
@@ -14,24 +14,26 @@ const Login = () => {
     const onSubmit: SubmitHandler<IFormInput> = async data => {
         try {
             const response = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/login', {
-                UserName: data.username, // שימוש בנתוני הטופס
-                Password: data.password
-            });
-            // צריך להעביר לקומפוננטת הרשמה
+                Name: data.Name, // שימוש בנתוני הטופס
+                Password: data.Password
+            }
+            );
+            navigate('home/')
 
+            // צריך להעביר לקומפוננטת הרשמה
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 // נניח שהשרת מחזיר סטטוס 409 אם המשתמש כבר קיים
-                if (error.response?.status === 409 ) {
+                if (error.response?.status === 409) {
                     console.log('User already exists');
                     navigate('home/')
-                } 
-                else if(error.response?.status === 401){
+                }
+                else if (error.response?.status === 401) {
                     console.log('User need to sign up');
                     navigate('sign-up/')
                 }
                 else {
-                    console.error('Registration failed:', error.message);
+                    console.log('Registration failed:', error.message);
                 }
             }
         }
@@ -43,20 +45,20 @@ const Login = () => {
             <h2>הירשמו כדי לטעום:</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div>
-                    <label htmlFor="username">Username</label>
+                    <label htmlFor="UserName">שם משתמש</label>
                     <input
-                        id="username" {...register('username', { required: true })} />
-                    {errors.username && <span>This field is required</span>}
+                        id="Name" {...register('Name', { required: true })} />
+                    {errors.Name && <small>שדה חובה</small>}
                 </div>
                 <div>
-                    <label htmlFor="password">Password</label>
+                    <label htmlFor="Password">סיסמא</label>
                     <input
-                        id="password" type="password" {...register('password', { required: true })} />
-                    {errors.password && <span>This field is required</span>}
+                        id="Password" type="password" {...register('Password', { required: true })} />
+                    {errors.Password && <small>שדה חובה</small>}
                 </div>
-                <button type="submit">Login</button>
+                <button type="submit">כניסה למערכת</button>
 
-                <Recipes/> {/*להוציא את זה זה לא המקום*/ }
+                <Recipes /> {/*להוציא את זה זה לא המקום*/}
             </form>
         </div>
     );

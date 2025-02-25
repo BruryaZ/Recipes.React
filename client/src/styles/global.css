@@ -6,7 +6,7 @@ body{
     direction: rtl;
 }
 
-div{
+div, form{
     display: flex;
     align-items: center;
     justify-content: center;

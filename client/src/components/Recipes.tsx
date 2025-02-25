@@ -1,5 +1,5 @@
 import axios from "axios"
-import RecipeType from "./Repositories/RecipeType";
+import RecipeType from "../repositories/RecipeType";
 import { useEffect, useState } from "react";
 
 

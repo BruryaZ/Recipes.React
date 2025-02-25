@@ -2,7 +2,7 @@ type IFormInputSignUp ={
     Name: string,
     Password: string,
     Phone: string,
-    Username: string,
+    UserName: string,
     Email: string,
     Tz: string,
     Id?: number

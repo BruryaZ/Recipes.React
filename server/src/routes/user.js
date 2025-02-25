@@ -4,6 +4,6 @@ const user = require('../controls/user');
 
 route.post('/login', user.Login)
 route.post('/sighin', user.Sighin)
-
+route.get('/', user.GetAllUsers)
 
 module.exports = route;

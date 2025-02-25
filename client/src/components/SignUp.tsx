@@ -2,9 +2,9 @@ import '../styles/global.css'
 import axios from "axios";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
-import IFormInputSignUp from "./Repositories/IFormInputSignUp";
+import IFormInputSignUp from "../repositories/IFormInputSignUp";
 import { useNavigate } from 'react-router-dom';
-import validationSchema from './Repositories/validationSchema';
+import validationSchema from '../repositories/validationSchema';
 
 const SignUp = () => {
     const navigate = useNavigate()
@@ -38,41 +38,41 @@ const SignUp = () => {
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div>
                     <label htmlFor="Username">שם לאתר שלנו</label>
-                    <input id="Username" {...register('Username')} />
-                    {errors.Username && <span>{errors.Username.message}</span>}
+                    <input id="Username" {...register('UserName')} />
+                    {errors.UserName && <small>{errors.UserName.message}</small>}
                 </div>
 
                 <div>
                     <label htmlFor="Password">סיסמא</label>
                     <input id="Password" type="Password" {...register('Password')} />
-                    {errors.Password && <span>{errors.Password.message}</span>}
+                    {errors.Password && <small>{errors.Password.message}</small>}
                 </div>
 
                 <div>
                     <label htmlFor="Name">שם מלא</label>
                     <input id="Name" {...register('Name')} />
-                    {errors.Name && <span>{errors.Name.message}</span>}
+                    {errors.Name && <small>{errors.Name.message}</small>}
                 </div>
 
                 <div>
                     <label htmlFor="Phone">טלפון</label>
                     <input id="Phone" {...register('Phone')} />
-                    {errors.Phone && <span>{errors.Phone.message}</span>}
+                    {errors.Phone && <small>{errors.Phone.message}</small>}
                 </div>
 
                 <div>
                     <label htmlFor="Email">מייל</label>
                     <input id="Email" type="Email" {...register('Email')} />
-                    {errors.Email && <span>{errors.Email.message}</span>}
+                    {errors.Email && <small>{errors.Email.message}</small>}
                 </div>
 
                 <div>
                     <label htmlFor="Tz">תעודת זהות</label>
                     <input id="Tz" {...register('Tz')} />
-                    {errors.Tz && <span>{errors.Tz.message}</span>}
+                    {errors.Tz && <small>{errors.Tz.message}</small>}
                 </div>
 
-                <button type="submit">Submit</button>
+                <button type="submit">להרשמה</button>
             </form>
         </div>
     )

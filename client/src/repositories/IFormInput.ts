@@ -1,6 +1,6 @@
 interface IFormInput {
-    username: string;
-    password: string;
+    Name: string;
+    Password: string;
 }
 
 export default IFormInput
