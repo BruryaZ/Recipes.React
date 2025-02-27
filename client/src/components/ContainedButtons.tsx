@@ -14,7 +14,4 @@ export default function ContainedButtons() {
       </Button>
     </Stack>
   );
-}
-
-
- 
+} 

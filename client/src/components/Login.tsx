@@ -5,7 +5,7 @@ import IFormInput from '../repositories/IFormInput';
 import IFormInputSignUp from '../repositories/IFormInputSignUp';
 import { useNavigate } from 'react-router-dom';
 import Recipes from './Recipes';
-import Header from './Header';
+import Header from './Dashboard';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm<IFormInput>();
@@ -13,7 +13,9 @@ const Login = () => {
 
     const onSubmit: SubmitHandler<IFormInput> = async data => {
         try {
-            const response = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/login', {
+            console.log( data.Name+" "+ data.Password);
+            
+            const response = await axios.post<IFormInput>('http://localhost:8080/api/user/login', {
                 Name: data.Name, // שימוש בנתוני הטופס
                 Password: data.Password
             }

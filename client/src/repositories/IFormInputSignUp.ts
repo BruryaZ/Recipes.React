@@ -1,11 +1,11 @@
 type IFormInputSignUp ={
-    Name: string,
+    Id: number
     Password: string,
-    Phone: string,
+    Name: string,
     UserName: string,
+    Phone: string,
     Email: string,
     Tz: string,
-    Id?: number
 }
 
 export default IFormInputSignUp;

@@ -15,8 +15,7 @@ div, form{
 
 body, div, form{
     text-align: rtl;
+    font-family: Heebo Thin;
     /* display: flex;
-    align-items: end;
-    flex-direction: column;
-    justify-content: center; */
+    justify-content: end; */
 }

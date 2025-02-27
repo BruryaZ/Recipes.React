@@ -9,19 +9,21 @@ import validationSchema from '../repositories/validationSchema';
 const SignUp = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm<IFormInputSignUp>({
-        resolver: yupResolver(validationSchema)
+        // resolver: yupResolver(validationSchema)
     })
 
     const onSubmit: SubmitHandler<IFormInputSignUp> = async data => {
-        console.log('signing up!');
+        console.log('signing in!');
         data = { ...data, Id: 0 };
         console.log(data);
 
         try {
-            const response = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/signup', data);
+            const response = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/sighin', data);
             console.log("home page");
             navigate('/home');
-        } catch (error) {
+        } 
+        
+        catch (error) {
             if (axios.isAxiosError(error)) {
                 console.log('Axios Registration failed:', error.message);
             } else {

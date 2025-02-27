@@ -16,7 +16,7 @@ const GetRecipe = (req, res) => {
     const { Id } = req.params;
     GetRecipeDb(Id)
         .then(x => res.send(x))
-        .catch(err =>{
+        .catch(err => {
             if (err?.errors[0]) {
                 return res.status(400).send(err?.errors[0]?.message)
             }
@@ -29,8 +29,43 @@ const AddRecipy = (req, res) => {
     const {
         Name, UserId, CategoryId, Img, Duration, Difficulty, Description,
         Ingridents, Instructions } = req.body;
-   
-    if (!Name || !UserId || !CategoryId || !Img || !Duration || !Difficulty || !Description || !Ingridents || !Instructions) {
+    if (!Name) {
+        console.log("שם המתכון חסר.");
+    }
+
+    if (!UserId) {
+        console.log("UserId חסר.");
+    }
+
+    if (!CategoryId) {
+        console.log("CategoryId חסר.");
+    }
+
+    if (!Img) {
+        console.log("תמונת המתכון חסרה.");
+    }
+
+    if (!Duration) {
+        console.log("משך ההכנה חסר.");
+    }
+
+    if (!Difficulty) {
+        console.log("רמת הקושי חסרה.");
+    }
+
+    if (!Description) {
+        console.log("תיאור המתכון חסר.");
+    }
+
+    if (!Ingridents) {
+        console.log("רכיבי המתכון חסרים.");
+    }
+
+    if (!Instructions) {
+        console.log("הוראות ההכנה חסרות.");
+    }
+
+    if (!Name || !UserId || !CategoryId || !Img || !Duration || !Difficulty || !Description || !Ingridents || !Instructions) { 
         // לא נשלח מידע
         return res.status(400).send('המידע שנשלח לא תקין')
     };
@@ -46,7 +81,6 @@ const AddRecipy = (req, res) => {
                 return res.status(400).send(err?.errors[0]?.message)
             }
             return res.status(400).send(err)
-
         })
 
 }
@@ -81,7 +115,7 @@ const Delete = (req, res) => {
     const { Id } = req.params;
     DeleteDb(Id)
         .then(_ => res.send('ok'))
-        .catch(err =>{
+        .catch(err => {
             if (err?.errors[0]) {
                 return res.status(400).send(err?.errors[0]?.message)
             }

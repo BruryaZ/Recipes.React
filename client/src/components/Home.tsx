@@ -1,15 +1,36 @@
+import { Box } from '@mui/material';
 import '../styles/global.css'
-import Header from './Header';
+import ImagesDashboard from './ImagesDashboard';
+import MySighInButton from './MySighInButton';
+import Grid from '@mui/material/Grid2';
 
 const Home = () => {
     return (
         <>
-            <Header />
-            <div>
-                <h2>ברוכים הבאים לאתר המתכונים שלנו!</h2>
-                <h3>כאן תוכלו למצוא מגוון רחב של מתכונים טעימים ובריאים.</h3>
-                <p>התחילו לחפש את המתכון המושלם עבורכם!</p>
-            </div>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center', // מרכז את התוכן אופקית
+                    alignItems: 'center', // מרכז את התוכן אנכית
+                    padding: 2, // הוסף padding כדי למנוע חיתוך
+                    width:'100%'
+                }}
+            >
+                <Grid container spacing={1}>
+                    <Grid size={5} />
+                    <Grid size={12}>
+                        <p>מבחר ענק טעיםם ומרשיםם של מתכונים בריאים מקלי הכנה ועד להכנה מורכבת</p>
+                    </Grid>
+                    <MySighInButton />
+                    <Grid size={12}>
+                        <small>יש לנו המון מבחר המון סגנונות בטוח תמצאו משהו שיטעיםםם</small>
+                    </Grid>
+                    <Grid size={12}>
+                        <ImagesDashboard />
+                    </Grid>
+                </Grid>
+            </Box>
+
         </>
     );
 };
