@@ -1,5 +1,5 @@
 interface IFormInput {
-    Name: string;
+    UserName: string;
     Password: string;
 }
 

@@ -6,6 +6,7 @@ import '../styles/global.css';
 import Recipe from "./Recipe";
 import { CssBaseline, extendTheme, ThemeProvider } from '@mui/material';
 import anyFood from '../img/health_recipe.webp'
+// import cake from '../img/whipped_cream_cake.jpeg'
 
 const demoTheme = extendTheme({
     typography: {
@@ -56,7 +57,7 @@ const Recipes = () => {
             } catch (error) {
                 console.log("Error fetching recipes:", error);
             }
-        };
+        };        
 
         fetchRecipes();
     }, []); // ריצה פעם אחת כאשר הקומפוננטה נטענת
@@ -68,16 +69,17 @@ const Recipes = () => {
                 {recipes.map((recipe) => (
                     <Recipe
                         key={recipe.Id}
+                        Id={recipe.Id}
                         title={recipe.Name}
-                        date={new Date().toLocaleDateString()}
-                        image={anyFood} //{recipe.Img ? recipe.Img : anyFood}
+                        date={new Date(recipe.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                        image={recipe.Img ? recipe.Img : anyFood}//{cake} //
                         description={recipe.Description}
                         method={recipe.Instructions.map(instruction => instruction.Name)}
                         difficulty={recipe.Difficulty} // הוספת רמת קושי
                         duration={recipe.Duration} // הוספת משך זמן
                         userId={recipe.UserId} // הוספת מזהה משתמש
                         categoryId={recipe.CategoryId} // הוספת מזהה קטגוריה
-                        ingredients={recipe.Ingrident} // הוספת רכיבים
+                        ingredients={recipe.Ingridents} // הוספת רכיבים
                         instructions={recipe.Instructions} // הוספת הוראות
                     />
                 ))}

@@ -1,26 +1,29 @@
 import '../styles/global.css'
 import axios from "axios";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { yupResolver } from '@hookform/resolvers/yup';
 import IFormInputSignUp from "../repositories/IFormInputSignUp";
 import { useNavigate } from 'react-router-dom';
-import validationSchema from '../repositories/validationSchema';
+import { useContext } from 'react';
+import { detailsContext } from '../context/Provider';
 
 const SignUp = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm<IFormInputSignUp>({
         // resolver: yupResolver(validationSchema)
     })
-
-    const onSubmit: SubmitHandler<IFormInputSignUp> = async data => {
+    // const globalContextDetails = useContext(globalContext)
+    const detailsContextProvider = useContext(detailsContext)
+    const onSubmit: SubmitHandler<IFormInputSignUp> = async user => {
         console.log('signing in!');
-        data = { ...data, Id: 0 };
-        console.log(data);
+        user = { ...user, Id: 0 };
 
         try {
-            const response = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/sighin', data);
-            console.log("home page");
-            navigate('/home');
+            const {data} = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/sighin', user);
+            detailsContextProvider.setMyId(data.Id);
+            detailsContextProvider.setMyName(data.Name);
+            detailsContextProvider.setMyEmail(data.Email);
+            detailsContextProvider.setMyPassword(data.Password);
+            navigate('/');
         } 
         
         catch (error) {

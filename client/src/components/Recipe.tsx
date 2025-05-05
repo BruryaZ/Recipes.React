@@ -1,53 +1,41 @@
-import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-import CardHeader from '@mui/material/CardHeader';
-import CardMedia from '@mui/material/CardMedia';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Collapse from '@mui/material/Collapse';
-import Avatar from '@mui/material/Avatar';
-import IconButton, { IconButtonProps } from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import { red } from '@mui/material/colors';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import ShareIcon from '@mui/icons-material/Share';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { detailsContext } from "../context/Provider"
+import {
+    Card,
+    CardContent,
+    CardMedia,
+    Typography,
+    Chip,
+    Stack,
+    Divider,
+    Box,
+    useMediaQuery,
+    useTheme,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import { useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { detailsContext } from '../context/Provider';
+import axios from 'axios';
 
-interface ExpandMoreProps extends IconButtonProps {
-    expand: boolean;
-}
+const difficultyMap: Record<number, string> = {
+    1: 'קל',
+    2: 'בינוני',
+    3: 'קשה',
+};
 
-const ExpandMore = styled((props: ExpandMoreProps) => {
-    const { expand, ...other } = props;
-    return <IconButton {...other} />;
-})(({ theme }) => ({
-    marginLeft: 'auto',
-    transition: theme.transitions.create('transform', {
-        duration: theme.transitions.duration.shortest,
-    }),
-    ...(props => ({
-        transform: props.expand ? 'rotate(180deg)' : 'rotate(0deg)',
-    })),
-}));
+const difficultyColors: Record<string, string> = {
+    'קל': '#388e3c',
+    'בינוני': '#f9a825',
+    'קשה': '#d32f2f',
+};
 
-interface RecipeReviewCardProps {
-    title: string;
-    date: string;
-    image: string;
-    description: string;
-    method: string[];
-    difficulty: string;
-    duration: number;
-    userId: number;
-    categoryId: number;
-    ingredients: { Name: string }[];
-    instructions: [{ Name: string }];
-}
-
-export default function RecipeReviewCard({
+const Recipe = ({
+    Id,
     title,
     date,
     image,
@@ -55,100 +43,197 @@ export default function RecipeReviewCard({
     method,
     difficulty,
     duration,
-    userId,
-    categoryId,
     ingredients,
-    instructions
-}: RecipeReviewCardProps) {
-    const [expanded, setExpanded] = React.useState(false);
-    const { name } = React.useContext(detailsContext)
+    userId
+}: any) => {
+    const theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+    const navigate = useNavigate();
+    const detailsContextProvider = useContext(detailsContext);
+    const [unauthorized, setUnauthorized] = useState(false);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
-    const handleExpandClick = () => {
-        setExpanded(!expanded);
+    useEffect(() => {
+        console.log('Recipe component mounted with Id:', Id);
+        console.log('Current user id:', detailsContextProvider.id);
+        
+        
+        // בדיקה אם המשתמש הנוכחי הוא בעל המתכון
+        if (userId !== detailsContextProvider.id) {
+            setUnauthorized(true); // אם לא, הצג הודעה שלא מורשה
+        }
+    }, [Id, detailsContextProvider.id]);
+
+    const handleEditClick = () => {
+        navigate(`/edit/${Id}`);
     };
 
+    const handleDeleteClick = () => {
+        setOpenDeleteDialog(true); // הצגת דיאלוג אישור מחיקה
+    };
+
+    const handleConfirmDelete = async () => {
+        setOpenDeleteDialog(false);
+        try {
+            const res = await axios.post<any>(`http://localhost:8080/api/recipe/delete/${Id}`)
+            console.log(res);
+
+        }
+        catch (error) {
+            console.log('שגיאה במחיקת המתכון:', error);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setOpenDeleteDialog(false);
+    };
+
+    // המרת רמת הקושי למילים אם מדובר במספר
+    const difficultyText = typeof difficulty === 'number' ? difficultyMap[difficulty] || 'לא מוגדר' : difficulty;
+
     return (
-        <Card sx={{ maxWidth: 345 }}>
-            <CardHeader
-                avatar={
-                    <Avatar sx={{ bgcolor: red[500] }} aria-label="recipe">
-                        {name[0].toUpperCase()} {/* ניתן להציג את האות הראשונה של הכותרת */}
-                    </Avatar>
-                }
-                action={
-                    <IconButton aria-label="settings">
-                        <MoreVertIcon />
-                    </IconButton>
-                }
-                title={title}
-                subheader={date}
-            />
+        <Card
+            sx={{
+                maxWidth: '1000px',
+                margin: '30px auto',
+                borderRadius: 6,
+                boxShadow: 6,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+            dir="rtl"
+        >
             <CardMedia
                 component="img"
-                height="194"
+                height="360"
                 image={image}
                 alt={title}
+                sx={{ objectFit: 'cover' }}
             />
-            <CardContent>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <CardContent sx={{ padding: 4 }}>
+                <Typography
+                    gutterBottom
+                    variant="h4"
+                    component="div"
+                    sx={{ fontWeight: 'bold', textAlign: 'right' }}
+                >
+                    {title}
+                </Typography>
+                <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 3, textAlign: 'right' }}
+                >
                     {description}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Difficulty: {difficulty}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Duration: {duration} minutes
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    User ID: {userId}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Category ID: {categoryId}
-                </Typography>
-            </CardContent>
-            <CardActions disableSpacing>
-                <IconButton aria-label="add to favorites">
-                    <FavoriteIcon />
-                </IconButton>
-                <IconButton aria-label="share">
-                    <ShareIcon />
-                </IconButton>
-                <ExpandMore
-                    expand={expanded}
-                    onClick={handleExpandClick}
-                    aria-expanded={expanded}
-                    aria-label="show more"
+                <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ mb: 3 }}
                 >
-                    <ExpandMoreIcon />
-                </ExpandMore>
+                    <Chip
+                        icon={<WhatshotIcon />}
+                        label={difficultyText}
+                        sx={{
+                            backgroundColor: difficultyColors[difficultyText] || '#757575',
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            px: 2,
+                            py: 1
+                        }}
+                    />
+                    <Chip
+                        icon={<AccessTimeIcon />}
+                        label={`${duration} דקות`}
+                        sx={{
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 1
+                        }}
+                    />
+                    <Box sx={{ flexGrow: 1 }} />
+                    <Typography variant="subtitle2" sx={{ mt: isSmallScreen ? 1 : 0, textAlign: 'left' }}>
+                        {date}
+                    </Typography>
+                </Stack>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mt: 2, textAlign: 'right' }}>
+                    מצרכים:
+                </Typography>
+                <ul style={{ marginTop: 8, paddingRight: '20px' }}>
+                    {ingredients?.map((ingredient: any, idx: number) => (
+                        <li key={idx}>
+                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                {`${ingredient.Name} – ${ingredient.Count} ${ingredient.Type}`}
+                            </Typography>
+                        </li>
+                    ))}
+                </ul>
+                <Typography variant="h6" sx={{ fontWeight: 600, mt: 3, textAlign: 'right' }}>
+                    הוראות הכנה:
+                </Typography>
+                <ol style={{ marginTop: 8, paddingRight: '20px' }}>
+                    {method?.map((step: string, idx: number) => (
+                        <li key={idx}>
+                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                {step}
+                            </Typography>
+                        </li>
+                    ))}
+                </ol>
 
-                {expanded && (
-                    <div>
-                        {instructions && instructions.map((ingredient, index) => (
-                            <Typography key={index} sx={{ marginBottom: 1 }}>
-                                {ingredient.Name}
-                            </Typography>))}
-                        {/* <p>I am Greate!</p> */}
-                    </div>
+                {/* הצגת הודעה אם המשתמש לא יכול לערוך את המתכון */}
+                {unauthorized ? (
+                    <Typography variant="body1" color="error" align="center" sx={{ fontFamily: 'inherit', marginTop: 2 }}>
+                        אין לך הרשאה לערוך את המתכון הזה.
+                    </Typography>
+                ) : (
+                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleEditClick}
+                            sx={{ flex: 1 }}
+                        >
+                            ערוך מתכון
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleDeleteClick}
+                            sx={{ flex: 1 }}
+                        >
+                            מחק מתכון
+                        </Button>
+                    </Stack>
                 )}
 
-            </CardActions>
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-                <CardContent>
-                    <Typography variant="h6">Ingredients:</Typography>
-                    {/* {ingredients.map((ingredient, index) => (
-                        <Typography key={index} sx={{ marginBottom: 1 }}>
-                            {ingredient.Name}
-                        </Typography>
-                    ))} */}
-                    <Typography variant="h6">Method:</Typography>
-                    {method.map((step, index) => (
-                        <Typography key={index} sx={{ marginBottom: 2 }}>
-                            {step}
-                        </Typography>
-                    ))}
-                </CardContent>
-            </Collapse>
+            </CardContent>
+
+
+            {/* דיאלוג אישור מחיקה */}
+            <Dialog open={openDeleteDialog} onClose={handleCancelDelete} dir="rtl">
+                <DialogTitle>אישור מחיקת מתכון</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                        האם אתה בטוח שברצונך למחוק את המתכון הזה? פעולה זו לא ניתנת לביטול.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelDelete} color="primary">
+                        ביטול
+                    </Button>
+                    <Button onClick={handleConfirmDelete} color="error">
+                        מחק
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Card>
     );
-}
+};
+
+export default Recipe;

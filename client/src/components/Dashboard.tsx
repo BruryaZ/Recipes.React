@@ -3,84 +3,15 @@ import { extendTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { AppProvider, Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useDemoRouter } from '@toolpad/core/internal';
-import Contact from './Contact';
 import Home from './Home';
 import Recipes from './Recipes';
-
-const NAVIGATION: Navigation = [
-    {
-        kind: 'header',
-        title: 'לבחירתך :)',
-    },
-    {
-        segment: 'home',
-        title: 'ברוכים הבאים לאתר המתכונים שלנו',
-        icon: <DashboardIcon />,
-    },
-    {
-        segment: 'recipes',
-        title: 'הצגת מתכונים',
-        icon: '🍳',
-    },
-    {
-        segment: 'edit-recipe',
-        title: 'עריכת מתכון',
-        icon: '📝',
-    },
-    {
-        segment: 'add-recipe',
-        title: 'הוספת מתכון',
-        icon: '➕',
-    },
-    {
-        segment: 'contact',
-        title: 'צור קשר',
-        icon: '📞',
-    },
-    {
-        kind: 'divider',
-    },
-    {
-        kind: 'header',
-        title: 'אפשרויות נוספות',
-    },
-    {
-        segment: 'reports',
-        title: 'משוב',
-        icon: '',
-        children: [
-            {
-                segment: 'sales',
-                title: 'נהנינו',
-                icon: '👍',
-            },
-            {
-                segment: 'traffic',
-                title: 'יש לנו רעיון לשיפור',
-                icon: '👎',
-            },
-        ],
-    },
-    {
-        segment: 'reports',
-        title: 'דיווח על תקלה',
-        icon: '',
-        children: [
-            {
-                segment: 'sales',
-                title: 'מתכון פגום',
-                icon: '🔥',
-            },
-            {
-                segment: 'traffic',
-                title: 'תלונות',
-                icon: '😥',
-            },
-        ],
-    }
-];
+import AddRecipePage from './AddRecipePage';
+import Contact from './Contact';
+import { detailsContext } from '../context/Provider';
+import { useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const demoTheme = extendTheme({
     typography: {
@@ -90,7 +21,7 @@ const demoTheme = extendTheme({
         light: {
             palette: {
                 primary: {
-                    main: '#1976d2',
+                    main: '#1976d2', // הצבעים כאן הם לדוגמה
                 },
                 secondary: {
                     main: '#dc004e',
@@ -108,83 +39,105 @@ const demoTheme = extendTheme({
             },
         },
     },
-    colorSchemeSelector: 'class',
-    breakpoints: {
-        values: {
-            xs: 0,
-            sm: 600,
-            md: 600,
-            lg: 1200,
-            xl: 1536,
-        },
-    },
+    colorSchemeSelector: 'class', // מאפשר למערכת לבחור את מצב הצבעים
 });
 
+const DemoPageContent = ({ pathname }: { pathname: string }) => {
+    const { id } = useContext(detailsContext);
+    const navigate = useNavigate();  // הוספת הניווט
 
-interface DemoProps {
-    /**
-     * Injected by the documentation to work in an iframe.
-     * Remove this when copying and pasting into your project.
-     */
-    window?: () => Window;
-}
+    // אם המשתמש לא מחובר והוא מנסה לגשת לעמוד שבו הוא לא מורשה
+    useEffect(() => {
+        if (id === -1) {
+            if (pathname === '/add-recipe' || pathname === '/recipes') {
+                // אם המשתמש לא מחובר, נווט לעמוד התחברות
+                navigate('/login');
+            }
+        }
+    }, [id, pathname, navigate]);
 
-function DemoPageContent({ pathname }: { pathname: string }) {
+    if (pathname === '/add-recipe' && id === -1) {
+        return <Typography color="error">עליך להתחבר כדי להוסיף מתכון</Typography>;
+    }
+
+    if (pathname === '/recipes' && id === -1) {
+        return <Typography color="error">עליך להתחבר כדי לצפות במתכונים שלנו</Typography>;
+    }
+
     switch (pathname) {
         case '/home':
             return <Home />;
         case '/recipes':
             return <Recipes />;
-        case '/edit-recipe':
-            return <></>;
         case '/add-recipe':
-            return <></>
+            return <AddRecipePage />;
         case '/contact':
             return <Contact />;
         default:
             return (
-                <Box
-                    sx={{
-                        py: 4,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        textAlign: 'center',
-                    }}
-                >
-                    <Typography>Dashboard content for {pathname}</Typography>
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography>אין עמוד כזה: {pathname}</Typography>
                 </Box>
             );
     }
-}
+};
 
-export default function Dashboard(props: DemoProps) {
-    const { window } = props;
-
+export default function Dashboard({ window }: { window?: () => Window }) {
     const router = useDemoRouter('/home');
+    const demoWindow = window ? window() : undefined;
+    const { id, name, setMyId } = useContext(detailsContext); // כאן אנחנו מקבלים את כל פרטי המשתמש
+    const isLoggedIn = id !== -1;
+    const nav = useNavigate()
 
-    const demoWindow = window !== undefined ? window() : undefined;
+    const NAVIGATION: Navigation = [
+        {
+            kind: 'header',
+            title: 'לבחירתך :)',
+        },
+        {
+            segment: 'home',
+            title: 'ברוכים הבאים לאתר המתכונים שלנו',
+            icon: <DashboardIcon />,
+        },
+        {
+            segment: 'recipes',
+            title: 'הצגת מתכונים',
+            icon: '🍳',
+        },
+        {
+            segment: 'add-recipe',
+            title: 'הוספת מתכון',
+            icon: '➕',
+        },
+        {
+            segment: 'contact',
+            title: 'צור קשר',
+            icon: '📞',
+        },
+    ];
 
     return (
-        <AppProvider
-            navigation={NAVIGATION}
-            router={router}
-            theme={demoTheme}
-            window={demoWindow}
-        >
-            <DashboardLayout>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center', // מרכז את התוכן אופקית
-                        alignItems: 'center', // מרכז את התוכן אנכית
-                        // height: '100vh', // גובה של 100% מהגובה של החלון
-                        padding: 2, // הוסף padding כדי למנוע חיתוך
-                    }}
-                >
-                    <DemoPageContent pathname={router.pathname} />
+        <AppProvider navigation={NAVIGATION} router={router} theme={demoTheme} window={demoWindow}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, padding: 2 }}>
+                    {isLoggedIn ? (
+                        <>
+                            <Typography>שלום, {name}</Typography>
+                            <Button variant="outlined" onClick={() => setMyId(-1)}>התנתקות</Button>
+                        </>
+                    ) : (
+                        <Button variant="contained" onClick={() => { nav('/login') }}>התחברות</Button>
+                    )}
                 </Box>
-            </DashboardLayout>
+
+                {/* Dashboard Content */}
+                <DashboardLayout>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 2 }}>
+                        <DemoPageContent pathname={router.pathname} />
+                    </Box>
+                </DashboardLayout>
+            </Box>
         </AppProvider>
     );
 }

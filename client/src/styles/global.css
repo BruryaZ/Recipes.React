@@ -13,9 +13,14 @@ div, form{
     flex-direction: column;
 } */
 
-body, div, form{
+body,
+div,
+form {
     text-align: rtl;
     font-family: Heebo Thin;
-    /* display: flex;
-    justify-content: end; */
+}
+
+body {
+    margin: 0;
+    overflow-x: hidden;
 }

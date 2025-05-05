@@ -4,6 +4,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Typography from '@mui/material/Typography';
 import sigh from '../img/sigh-in.jpg'
 import login from '../img/login.jpg'
+import { Link } from 'react-router-dom';
 
 const images = [
   {
@@ -120,8 +121,12 @@ export default function MySighInButton() {
                 pb: `calc(${theme.spacing(1)} + 6px)`,
               })}
             >
-              {image.id == 1 &&<small>עדיין לא רשומים? לחצו כאן👇</small>}
-              {image.id == 2 &&<small>כבר רשומים? לחצו כאן👇</small>}
+               {image.id == 1 && (
+                <Link to="/sign-up">עדיין לא רשומים? לחצו כאן👇</Link> // ניתוב לדף ההרשמה
+              )}
+              {image.id == 2 && (
+                <Link to="/login">כבר רשומים? לחצו כאן👇</Link> // ניתוב לדף הכניסה
+              )}
               {image.title}
 
               <ImageMarked className="MuiImageMarked-root" />

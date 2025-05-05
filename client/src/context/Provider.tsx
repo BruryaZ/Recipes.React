@@ -13,7 +13,7 @@ type UserContextType = {
 
 export const detailsContext = createContext<UserContextType>(
     {
-        id: 0,
+        id: -1,
         setMyId: (_: number) => { },
         name: "",
         setMyName: (_: string) => { },
@@ -25,7 +25,7 @@ export const detailsContext = createContext<UserContextType>(
 )
 
 const UserProvider = ({ children }: { children: ReactElement }) => {
-    const [id, setMyId] = useState<number>(0)
+    const [id, setMyId] = useState<number>(-1)
     const [name, setMyName] = useState<string>("A")
     const [email, setMyEmail] = useState<string>("a@a")
     const [password, setMyPassword] = useState<string>("111111")

@@ -67,7 +67,7 @@ const AddRecipy = (req, res) => {
 
     if (!Name || !UserId || !CategoryId || !Img || !Duration || !Difficulty || !Description || !Ingridents || !Instructions) { 
         // לא נשלח מידע
-        return res.status(400).send('המידע שנשלח לא תקין')
+        return res.status(400).send('המידע שנשלח לא תקין' )
     };
 
     const newRecipe = {

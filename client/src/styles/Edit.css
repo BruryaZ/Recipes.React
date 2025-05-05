@@ -1,0 +1,47 @@
+/* עיצוב של קומפוננטת EditRecipe */
+.edit-recipe-container {
+    display: flex;
+    flex-direction: column; /* פריסת עמודה */
+    align-items: center; /* ממקם את התוכן במרכז אנכית */
+    justify-content: center; /* ממקם את התוכן במרכז אופקית */
+    width: 100%; /* תופס את כל הרוחב */
+    max-width: 800px; /* קובע רוחב מרבי אם רוצים */
+    margin: 0 auto; /* ממקם את הקומפוננטה במרכז עם רווחים אוטומטיים בצדדים */
+    padding: 20px;
+    background-color: #fff; /* רקע בהיר, אפשר לשנות לפי הצורך */
+    border-radius: 8px; /* פינות מעוגלות */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* הצללה עדינה */
+}
+
+.edit-recipe-container .MuiTypography-root {
+    text-align: center; /* טקסט ממורכז בכותרות */
+    width: 100%;
+}
+
+/* טפסים ושדות */
+.edit-recipe-container .MuiTextField-root {
+    width: 100%; /* כל שדה יתפוס את כל הרוחב */
+    margin-bottom: 16px; /* רווח בין השדות */
+    text-align: right; /* כיוון הטקסט מימין לשמאל */
+}
+
+/* כפתור שמירה */
+.edit-recipe-container .MuiButton-root {
+    margin-top: 16px; /* רווח מעל הכפתור */
+    align-self: center; /* ממקם את הכפתור במרכז */
+}
+
+/* שדות מצרכים */
+.edit-recipe-container .ingredient-field {
+    display: flex;
+    justify-content: space-between; /* מיקום המצרכים מצד ימין ומצד שמאל */
+    width: 100%; 
+    gap: 16px; /* רווח בין השדות */
+}
+
+/* שדות הוראות */
+.edit-recipe-container .instruction-field {
+    width: 100%;
+    margin-bottom: 16px;
+    text-align: right;
+}
