@@ -26,5 +26,4 @@ const DeleteDb = (Id) => {
     return Recipe.destroy({ where: { Id } })
 }
 
-
 module.exports = { GetRecipeDb, AddRecipyDB, EditRecipyDb, DeleteDb, GetRecipesDb }

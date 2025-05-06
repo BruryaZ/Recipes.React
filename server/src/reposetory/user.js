@@ -9,8 +9,4 @@ const SighinDb = (user) => {
     return User.create(user)
 }
 
-const GetUsersDb = () => {
-    return User.findAll()
-}
-
-module.exports = { LoginDb, SighinDb, GetUsersDb };
+module.exports = { LoginDb, SighinDb };
