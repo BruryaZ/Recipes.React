@@ -1,56 +1,63 @@
-import { useContext, useState, useEffect } from 'react';
-import { Category, Recipe } from '../repositories/RecipeType';
-import axios from 'axios';
-import { detailsContext } from '../context/Provider';
-import AddRecipe from './AddRecipe';
-import { useNavigate } from 'react-router-dom';
+"use client"
+
+import { useState, useEffect } from "react"
+import { Box, Container } from "@mui/material"
+import axios from "axios"
+import type { Category, Recipe } from "../repositories/RecipeType"
+import { useTheme } from "@mui/material/styles"
+import AddRecipe from "./AddRecipe"
 
 const AddRecipePage = () => {
-  const detailsContextProvider = useContext(detailsContext);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const nav = useNavigate()
-  useEffect(() => {
-    // טעינת הקטגוריות מראש
-    const loadCategories = async () => {
-      try {
-        const { data } = await axios.get<Category[]>('http://localhost:8080/api/category');
-        setCategories(data);
-      } catch (error) {
-        console.log('שגיאה בטעינת הקטגוריות:', error);
-      }
-    };
-    loadCategories();
-  }, []);
+  const theme = useTheme()
+  const isDarkMode = theme.palette.mode === "dark"
+  const [categories, setCategories] = useState<Category[]>([])
 
-  const [newRecipe, setNewRecipe] = useState<Recipe>({
+  const emptyRecipe: Recipe = {
     Id: 0,
-    Name: '',
-    UserId: detailsContextProvider.id,
-    Categoryid: 1,
-    Img: '',
-    Duration: 0,
+    Name: "",
+    Description: "",
     Difficulty: 1,
-    Description: '',
-    Ingridents: [{ Name: '', Count: '', Type: '' }],
-    Instructions: [{ Name: '' }],
-  });
+    Duration: 30,
+    Categoryid: 1,
+    UserId: -1,
+    Img: "",
+    Ingridents: [{ Name: "", Count: "", Type: "" }],
+    Instructions: [{ Name: "" }],
+  }
 
-  const handleSave = (savedRecipe: Recipe) => {
-    alert('המתכון נוסף בהצלחה!');
-    setNewRecipe(savedRecipe); // או לאפס ל־default אם רוצים
-    nav('/recipes'); // נווט לדף המתכונים
-  };
+  const [recipe] = useState<Recipe>(emptyRecipe)
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get<Category[]>("http://localhost:8080/api/category")
+        setCategories(res.data)
+      } catch (error) {
+        console.log("Error fetching categories:", error)
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+  const handleSaveRecipe = (updatedRecipe: Recipe) => {
+    // Handle save logic
+    console.log("Recipe saved:", updatedRecipe)
+  }
 
   return (
-    <>
-      <AddRecipe
-        recipe={newRecipe}
-        onSave={handleSave}
-        isDarkMode={true}
-        categories={categories}
-      />
-    </>
-  );
-};
+    <Box
+      sx={{
+        backgroundColor: isDarkMode ? "#121212" : "#f5f5f5",
+        minHeight: "100vh",
+        py: 2,
+      }}
+    >
+      <Container maxWidth="lg">
+        <AddRecipe recipe={recipe} onSave={handleSaveRecipe} isDarkMode={isDarkMode} categories={categories} />
+      </Container>
+    </Box>
+  )
+}
 
-export default AddRecipePage;
+export default AddRecipePage

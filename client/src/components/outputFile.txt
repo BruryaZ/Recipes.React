@@ -1,0 +1,2152 @@
+//Brurya
+
+import { useContext, useState } from 'react';
+import {
+  TextField, Button, Stack, Box, Typography,
+  MenuItem, Select, InputLabel, FormControl, FormHelperText,
+} from '@mui/material';
+import axios from 'axios';
+import { Category, Ingredient, Instruction, Recipe } from '../repositories/RecipeType';
+import { convertResRecipeToRecipeType, ResRecipe } from '../repositories/ResRecipe';
+import { detailsContext } from '../context/Provider';
+import { useNavigate } from 'react-router-dom';
+
+const AddRecipe = ({
+  recipe,
+  onSave,
+  isDarkMode,
+  categories,
+}: {
+  recipe: Recipe;
+  onSave: (updated: Recipe) => void;
+  isDarkMode: boolean;
+  categories: Category[];
+}) => {
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const detailsContextProvider = useContext(detailsContext);
+  const nav = useNavigate();
+  const [addRecipe, setAddRecipe] = useState<Recipe>({
+    ...recipe,
+    Categoryid: recipe.Categoryid || (categories[0] ? categories[0].Id : 1), // בחר ברירת מחדל
+  });
+
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!addRecipe.Name.trim()) newErrors.Name = 'נא להזין שם למתכון';
+    if (!addRecipe.Description.trim()) newErrors.Description = 'נא להזין תיאור';
+    if (!addRecipe.Difficulty || isNaN(+addRecipe.Difficulty)) newErrors.Difficulty = 'נא להזין רמת קושי מספרית';
+    if (!addRecipe.Duration || isNaN(+addRecipe.Duration)) newErrors.Duration = 'נא להזין זמן הכנה במספרים';
+    if (!addRecipe.Categoryid) newErrors.Categoryid = 'נא לבחור קטגוריה';
+
+    addRecipe.Ingridents.forEach((ing, i) => {
+      if (!ing.Name.trim()) newErrors[`Ingridents-${i}-Name`] = 'שם חובה';
+      if (!ing.Count.trim()) newErrors[`Ingridents-${i}-Count`] = 'כמות חובה';
+      if (!ing.Type.trim()) newErrors[`Ingridents-${i}-Type`] = 'סוג חובה';
+    });
+
+    addRecipe.Instructions.forEach((inst, i) => {
+      if (!inst.Name.trim()) newErrors[`Instructions-${i}`] = 'הוראה לא יכולה להיות ריקה';
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any, field: string) => {
+    setAddRecipe((prev) => ({
+      ...prev,
+      [field]: e.target.value,
+    }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const handleIngredientChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number,
+    field: string
+  ) => {
+    const updatedIngredients = [...addRecipe.Ingridents];
+    (updatedIngredients[index] as any)[field] = e.target.value;
+    setAddRecipe((prev) => ({
+      ...prev,
+      Ingridents: updatedIngredients,
+    }));
+    setErrors((prev) => ({ ...prev, [`Ingridents-${index}-${field}`]: '' }));
+  };
+
+  const handleInstructionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number
+  ) => {
+    const updatedInstructions = [...addRecipe.Instructions];
+    updatedInstructions[index].Name = e.target.value;
+    setAddRecipe((prev) => ({
+      ...prev,
+      Instructions: updatedInstructions,
+    }));
+    setErrors((prev) => ({ ...prev, [`Instructions-${index}`]: '' }));
+  };
+
+  const addInstruction = () => {
+    setAddRecipe((prev) => ({
+      ...prev,
+      Instructions: [...prev.Instructions, { Name: '' }], // נוסיף הוראה חדשה עם שדה Name ריק
+    }));
+  };
+
+  const addIngredient = () => {
+    setAddRecipe((prev) => ({
+      ...prev,
+      Ingridents: [...prev.Ingridents, { Name: '', Count: '', Type: '' }], // נוסיף מצרך חדש עם שדות ריקים
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+
+    try {
+      addRecipe.UserId = detailsContextProvider.id;
+      addRecipe.Img = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60";
+      const { data } = await axios.post<ResRecipe>('http://localhost:8080/api/recipe', addRecipe);
+      onSave(convertResRecipeToRecipeType(data));
+      nav('/recipes')
+    } catch (error) {
+      console.log('שגיאה בשמירת מתכון:', error);
+    }
+  };
+
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000', padding: 4 }} dir="rtl">
+      <Box sx={{ width: '100%', maxWidth: 600 }}>
+        <Typography variant="h5" align="center" sx={{ fontFamily: 'inherit' }}>
+          {addRecipe.Id === 0 ? 'הוספת מתכון חדש' : 'עריכת פרטי מתכון'}
+        </Typography>
+
+        <Stack spacing={4}>
+          <TextField
+            label="שם המתכון"
+            value={addRecipe.Name}
+            onChange={(e) => handleChange(e, 'Name')}
+            fullWidth
+            error={!!errors.Name}
+            helperText={errors.Name}
+          />
+          <TextField
+            label="תיאור"
+            value={addRecipe.Description}
+            onChange={(e) => handleChange(e, 'Description')}
+            fullWidth
+            error={!!errors.Description}
+            helperText={errors.Description}
+          />
+          <TextField
+            label="רמת קושי"
+            type="number"
+            value={addRecipe.Difficulty}
+            onChange={(e) => handleChange(e, 'Difficulty')}
+            fullWidth
+            error={!!errors.Difficulty}
+            helperText={errors.Difficulty}
+          />
+          <TextField
+            label="משך זמן הכנה (דקות)"
+            type="number"
+            value={addRecipe.Duration}
+            onChange={(e) => handleChange(e, 'Duration')}
+            fullWidth
+            error={!!errors.Duration}
+            helperText={errors.Duration}
+          />
+
+          <FormControl fullWidth error={!!errors.Categoryid}>
+            <InputLabel id="category-label" style={{ fontFamily: 'inherit' }}>
+              קטגוריה
+            </InputLabel>
+            <Select
+              labelId="category-label"
+              value={addRecipe.Categoryid || ''}
+              label="קטגוריה"
+              onChange={(e) =>
+                setAddRecipe((prev) => ({
+                  ...prev,
+                  Categoryid: parseInt(e.target.value as string),
+                }))
+              }
+            >
+              {categories.map((cat) => (
+                <MenuItem key={cat.Id} value={cat.Id}>
+                  {cat.Name}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.Categoryid && <FormHelperText>{errors.Categoryid}</FormHelperText>}
+          </FormControl>
+
+          <Typography variant="h6" align="center">מצרכים</Typography>
+          {addRecipe.Ingridents.map((ingredient: Ingredient, index: number) => (
+            <Stack direction="row" spacing={2} key={index}>
+              <TextField
+                label="שם"
+                value={ingredient.Name}
+                onChange={(e) => handleIngredientChange(e, index, 'Name')}
+                fullWidth
+                error={!!errors[`Ingridents-${index}-Name`]}
+                helperText={errors[`Ingridents-${index}-Name`]}
+              />
+              <TextField
+                label="כמות"
+                value={ingredient.Count}
+                onChange={(e) => handleIngredientChange(e, index, 'Count')}
+                fullWidth
+                error={!!errors[`Ingridents-${index}-Count`]}
+                helperText={errors[`Ingridents-${index}-Count`]}
+              />
+              <TextField
+                label="סוג"
+                value={ingredient.Type}
+                onChange={(e) => handleIngredientChange(e, index, 'Type')}
+                fullWidth
+                error={!!errors[`Ingridents-${index}-Type`]}
+                helperText={errors[`Ingridents-${index}-Type`]}
+              />
+            </Stack>
+          ))}
+          <Button variant="contained" onClick={addIngredient}>הוסף מצרך</Button>
+
+          <Typography variant="h6" align="center">הוראות הכנה</Typography>
+          {addRecipe.Instructions.map((instruction: Instruction, index: number) => (
+            <TextField
+              key={index}
+              label={`הוראה ${index + 1}`}
+              value={instruction.Name}
+              onChange={(e) => handleInstructionChange(e, index)}
+              fullWidth
+              multiline
+              rows={2}
+              error={!!errors[`Instructions-${index}`]}
+              helperText={errors[`Instructions-${index}`]}
+            />
+          ))}
+          <Button variant="contained" onClick={addInstruction}>הוסף הוראה</Button>
+
+          <Button variant="contained" onClick={handleSave} fullWidth>
+            שמור
+          </Button>
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
+
+export default AddRecipe;
+import { useContext, useState, useEffect } from 'react';
+import { Category, Recipe } from '../repositories/RecipeType';
+import axios from 'axios';
+import { detailsContext } from '../context/Provider';
+import AddRecipe from './AddRecipe';
+import { useNavigate } from 'react-router-dom';
+
+const AddRecipePage = () => {
+  const detailsContextProvider = useContext(detailsContext);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const nav = useNavigate()
+  useEffect(() => {
+    // טעינת הקטגוריות מראש
+    const loadCategories = async () => {
+      try {
+        const { data } = await axios.get<Category[]>('http://localhost:8080/api/category');
+        setCategories(data);
+      } catch (error) {
+        console.log('שגיאה בטעינת הקטגוריות:', error);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  const [newRecipe, setNewRecipe] = useState<Recipe>({
+    Id: 0,
+    Name: '',
+    UserId: detailsContextProvider.id,
+    Categoryid: 1,
+    Img: '',
+    Duration: 0,
+    Difficulty: 1,
+    Description: '',
+    Ingridents: [{ Name: '', Count: '', Type: '' }],
+    Instructions: [{ Name: '' }],
+  });
+
+  const handleSave = (savedRecipe: Recipe) => {
+    alert('המתכון נוסף בהצלחה!');
+    setNewRecipe(savedRecipe); // או לאפס ל־default אם רוצים
+    nav('/recipes'); // נווט לדף המתכונים
+  };
+
+  return (
+    <>
+      <AddRecipe
+        recipe={newRecipe}
+        onSave={handleSave}
+        isDarkMode={true}
+        categories={categories}
+      />
+    </>
+  );
+};
+
+export default AddRecipePage;
+import '../styles/global.css'
+
+const Contact = () => {
+    return (
+        <div>
+        <h1>Contact</h1>
+        <p>Send us a message!</p>
+        </div>
+    );
+}
+
+export default Contact
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+
+export default function ContainedButtons() {
+  return (
+    <Stack direction="row" spacing={5}>
+      <Button variant="contained">עמוד הבית</Button>
+      <Button variant="contained" >מתכונים</Button>
+      <Button variant="contained" >הוספת מתכון</Button>
+      <Button variant="contained" >עריכת מתכון</Button>
+      <Button variant="contained" >צור קשר</Button>
+      <Button variant="contained" >
+        לאתרי המתכונים
+      </Button>
+    </Stack>
+  );
+} 
+import '../styles/global.css';
+import { extendTheme } from '@mui/material/styles';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import { AppProvider, Navigation } from '@toolpad/core/AppProvider';
+import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { Box, Button, Typography } from '@mui/material';
+import { useDemoRouter } from '@toolpad/core/internal';
+import Home from './Home';
+import Recipes from './Recipes';
+import AddRecipePage from './AddRecipePage';
+import Contact from './Contact';
+import { detailsContext } from '../context/Provider';
+import { useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const demoTheme = extendTheme({
+    typography: {
+        fontFamily: 'Heebo Thin',
+    },
+    colorSchemes: {
+        light: {
+            palette: {
+                primary: {
+                    main: '#1976d2', // הצבעים כאן הם לדוגמה
+                },
+                secondary: {
+                    main: '#dc004e',
+                },
+            },
+        },
+        dark: {
+            palette: {
+                primary: {
+                    main: '#90caf9',
+                },
+                secondary: {
+                    main: '#f48fb1',
+                },
+            },
+        },
+    },
+    colorSchemeSelector: 'class', // מאפשר למערכת לבחור את מצב הצבעים
+});
+
+const DemoPageContent = ({ pathname }: { pathname: string }) => {
+    const { id } = useContext(detailsContext);
+    const navigate = useNavigate();  // הוספת הניווט
+
+    // אם המשתמש לא מחובר והוא מנסה לגשת לעמוד שבו הוא לא מורשה
+    useEffect(() => {
+        if (id === -1) {
+            if (pathname === '/add-recipe' || pathname === '/recipes') {
+                // אם המשתמש לא מחובר, נווט לעמוד התחברות
+                navigate('/login');
+            }
+        }
+    }, [id, pathname, navigate]);
+
+    if (pathname === '/add-recipe' && id === -1) {
+        return <Typography color="error">עליך להתחבר כדי להוסיף מתכון</Typography>;
+    }
+
+    if (pathname === '/recipes' && id === -1) {
+        return <Typography color="error">עליך להתחבר כדי לצפות במתכונים שלנו</Typography>;
+    }
+
+    switch (pathname) {
+        case '/home':
+            return <Home />;
+        case '/recipes':
+            return <Recipes />;
+        case '/add-recipe':
+            return <AddRecipePage />;
+        case '/contact':
+            return <Contact />;
+        default:
+            return (
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography>אין עמוד כזה: {pathname}</Typography>
+                </Box>
+            );
+    }
+};
+
+export default function Dashboard({ window }: { window?: () => Window }) {
+    const router = useDemoRouter('/home');
+    const demoWindow = window ? window() : undefined;
+    const { id, name, setMyId } = useContext(detailsContext); // כאן אנחנו מקבלים את כל פרטי המשתמש
+    const isLoggedIn = id !== -1;
+    const nav = useNavigate()
+
+    const NAVIGATION: Navigation = [
+        {
+            kind: 'header',
+            title: 'לבחירתך :)',
+        },
+        {
+            segment: 'home',
+            title: 'ברוכים הבאים לאתר המתכונים שלנו',
+            icon: <DashboardIcon />,
+        },
+        {
+            segment: 'recipes',
+            title: 'הצגת מתכונים',
+            icon: '🍳',
+        },
+        {
+            segment: 'add-recipe',
+            title: 'הוספת מתכון',
+            icon: '➕',
+        },
+        {
+            segment: 'contact',
+            title: 'צור קשר',
+            icon: '📞',
+        },
+    ];
+
+    return (
+        <AppProvider navigation={NAVIGATION} router={router} theme={demoTheme} window={demoWindow}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, padding: 2 }}>
+                    {isLoggedIn ? (
+                        <>
+                            <Typography>שלום, {name}</Typography>
+                            <Button variant="outlined" onClick={() => setMyId(-1)}>התנתקות</Button>
+                        </>
+                    ) : (
+                        <Button variant="contained" onClick={() => { nav('/login') }}>התחברות</Button>
+                    )}
+                </Box>
+
+                {/* Dashboard Content */}
+                <DashboardLayout>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 2 }}>
+                        <DemoPageContent pathname={router.pathname} />
+                    </Box>
+                </DashboardLayout>
+            </Box>
+        </AppProvider>
+    );
+}
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { createTheme } from '@mui/material/styles';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import DescriptionIcon from '@mui/icons-material/Description';
+import LayersIcon from '@mui/icons-material/Layers';
+import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
+import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { useDemoRouter } from '@toolpad/core/internal';
+
+const NAVIGATION: Navigation = [
+  {
+    kind: 'header',
+    title: 'Main items',
+  },
+  {
+    segment: 'dashboard',
+    title: 'Dashboard',
+    icon: <DashboardIcon />,
+  },
+  {
+    segment: 'orders',
+    title: 'Orders',
+    icon: <ShoppingCartIcon />,
+  },
+  {
+    kind: 'divider',
+  },
+  {
+    kind: 'header',
+    title: 'Analytics',
+  },
+  {
+    segment: 'reports',
+    title: 'Reports',
+    icon: <BarChartIcon />,
+    children: [
+      {
+        segment: 'sales',
+        title: 'Sales',
+        icon: <DescriptionIcon />,
+      },
+      {
+        segment: 'traffic',
+        title: 'Traffic',
+        icon: <DescriptionIcon />,
+      },
+    ],
+  },
+  {
+    segment: 'integrations',
+    title: 'Integrations',
+    icon: <LayersIcon />,
+  },
+];
+
+const demoTheme = createTheme({
+  cssVariables: {
+    colorSchemeSelector: 'data-toolpad-color-scheme',
+  },
+  colorSchemes: { light: true, dark: true },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 600,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
+});
+
+function DemoPageContent({ pathname }: { pathname: string }) {
+  return (
+    <Box
+      sx={{
+        py: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+      }}
+    >
+      <Typography>Dashboard content for {pathname}</Typography>
+    </Box>
+  );
+}
+
+interface DemoProps {
+  /**
+   * Injected by the documentation to work in an iframe.
+   * Remove this when copying and pasting into your project.
+   */
+  window?: () => Window;
+}
+
+export default function DashboardLayoutBasic(props: DemoProps) {
+  const { window } = props;
+
+  const router = useDemoRouter('/dashboard');
+
+  // Remove this const when copying and pasting into your project.
+  const demoWindow = window !== undefined ? window() : undefined;
+
+  return (
+    // preview-start
+    <AppProvider
+      navigation={NAVIGATION}
+      router={router}
+      theme={demoTheme}
+      window={demoWindow}
+    >
+      <DashboardLayout>
+        <DemoPageContent pathname={router.pathname} />
+      </DashboardLayout>
+    </AppProvider>
+    // preview-end
+  );
+}
+import { useContext, useEffect, useState } from 'react';
+import {
+  TextField,
+  Button,
+  Stack,
+  Box,
+  Typography,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+} from '@mui/material';
+import axios from 'axios';
+import { Category, Ingredient, Instruction, Recipe } from '../repositories/RecipeType';
+import { ResRecipe } from '../repositories/ResRecipe';
+import { detailsContext } from '../context/Provider';
+import { useNavigate } from 'react-router-dom';
+
+const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
+  const [editedRecipe, setEditedRecipe] = useState<Recipe>({ ...recipe });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [unauthorized, setUnauthorized] = useState(false);  // משתנה להודעות לא מורשה
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
+  const detailsContextProvider = useContext(detailsContext);
+  const nav = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get<Category[]>('http://localhost:8080/api/category');
+        setCategories(res.data);
+
+        // אם אין קטגוריה נבחרת במתכון, קובעים את הראשונה כברירת מחדל
+        if (!editedRecipe.Categoryid && res.data.length > 0) {
+          setEditedRecipe((prev) => ({
+            ...prev,
+            Categoryid: res.data[0].Id,
+          }));
+        }
+      } catch (error) {
+        console.log('שגיאה בטעינת קטגוריות:', error);
+      }
+    };
+
+    if (recipe.UserId !== detailsContextProvider.id) {
+      setUnauthorized(true);
+    }
+
+    fetchCategories();
+  }, [recipe, detailsContextProvider.id]);
+
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any, field: string) => {
+    setEditedRecipe((prev) => ({
+      ...prev,
+      [field]: e.target.value,
+    }));
+  };
+
+  const handleIngredientChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number,
+    field: string
+  ) => {
+    const updatedIngredients = [...editedRecipe.Ingridents];
+    (updatedIngredients[index] as any)[field] = e.target.value;
+    setEditedRecipe((prev) => ({
+      ...prev,
+      Ingridents: updatedIngredients,
+    }));
+  };
+
+  const handleInstructionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    index: number
+  ) => {
+    const updatedInstructions = [...editedRecipe.Instructions];
+    updatedInstructions[index].Name = e.target.value;
+    setEditedRecipe((prev) => ({
+      ...prev,
+      Instructions: updatedInstructions,
+    }));
+  };
+
+  const addIngredient = () => {
+    setEditedRecipe((prev) => ({
+      ...prev,
+      Ingridents: [...prev.Ingridents, { Name: '', Count: '', Type: '' }],
+    }));
+  };
+
+  const addInstruction = () => {
+    setEditedRecipe((prev) => ({
+      ...prev,
+      Instructions: [...prev.Instructions, { Name: '' }],
+    }));
+  };
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!editedRecipe.Name) errors.Name = 'שם המתכון הוא שדה חובה';
+    if (!editedRecipe.Description) errors.Description = 'תיאור המתכון הוא שדה חובה';
+    if (!editedRecipe.Categoryid) errors.Categoryid = 'קטגוריה היא שדה חובה';
+    if (!editedRecipe.Duration || editedRecipe.Duration <= 0) errors.Duration = 'משך זמן הכנה חייב להיות מספר חיובי';
+
+    editedRecipe.Ingridents.forEach((ingredient, index) => {
+      if (!ingredient.Name) errors[`ingredientName-${index}`] = `שם המצרך ${index + 1} הוא שדה חובה`;
+      if (!ingredient.Count) errors[`ingredientCount-${index}`] = `כמות המצרך ${index + 1} היא שדה חובה`;
+      if (!ingredient.Type) errors[`ingredientType-${index}`] = `סוג המצרך ${index + 1} הוא שדה חובה`;
+    });
+
+    editedRecipe.Instructions.forEach((instruction, index) => {
+      if (!instruction.Name) errors[`instruction-${index}`] = `הוראת הכנה ${index + 1} היא שדה חובה`;
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0; // אם אין שגיאות
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return; // אם יש שגיאות, לא נמשיך
+
+    try {
+      const res = await axios.post<ResRecipe>('http://localhost:8080/api/recipe/edit', editedRecipe);
+      onSave(res.data);
+      nav('/recipes'); // חזרה לדף הבית לאחר שמירה
+    } catch (error) {
+      console.log('Error saving recipe:', error);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: isDarkMode ? '#333' : '#fff',
+        color: isDarkMode ? '#fff' : '#000',
+        padding: 4,
+      }}
+      dir="rtl"
+    >
+      <Box sx={{ width: '100%', maxWidth: 600 }}>
+        <Typography variant="h5" align="center" sx={{ fontFamily: 'inherit' }}>
+          עריכת פרטי מתכון
+        </Typography>
+
+        {/* הצגת הודעת לא מורשה אם המשתמש לא יכול לערוך את המתכון */}
+        {unauthorized && (
+          <Typography variant="body1" color="error" align="center" sx={{ fontFamily: 'inherit', marginBottom: 2 }}>
+            אין לך הרשאה לערוך את המתכון הזה.
+          </Typography>
+        )}
+
+        {!unauthorized && (
+          <Stack spacing={4}>
+            <TextField
+              label="שם המתכון"
+              value={editedRecipe.Name}
+              onChange={(e) => handleChange(e, 'Name')}
+              fullWidth
+              InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Name}
+              helperText={validationErrors.Name}
+            />
+            <TextField
+              label="תיאור"
+              value={editedRecipe.Description}
+              onChange={(e) => handleChange(e, 'Description')}
+              fullWidth
+              InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Description}
+              helperText={validationErrors.Description}
+            />
+            <TextField
+              label="רמת קושי"
+              value={editedRecipe.Difficulty}
+              onChange={(e) => handleChange(e, 'Difficulty')}
+              fullWidth
+              InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+            />
+            <TextField
+              label="משך זמן הכנה (דקות)"
+              type="number"
+              value={editedRecipe.Duration}
+              onChange={(e) => handleChange(e, 'Duration')}
+              fullWidth
+              InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Duration}
+              helperText={validationErrors.Duration}
+            />
+
+            {/* שדה קטגוריה */}
+            <FormControl fullWidth>
+              <InputLabel id="category-label" style={{ fontFamily: 'inherit', textAlign: 'right' }}>
+                קטגוריה
+              </InputLabel>
+              <Select
+                labelId="category-label"
+                value={editedRecipe.Categoryid || ''}
+                label="קטגוריה"
+                onChange={(e) =>
+                  setEditedRecipe((prev) => ({
+                    ...prev,
+                    Categoryid: parseInt(e.target.value as string),
+                  }))
+                }
+                style={{ fontFamily: 'inherit', textAlign: 'right' }}
+                error={!!validationErrors.Categoryid}
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat.Id} value={cat.Id} style={{ fontFamily: 'inherit', textAlign: 'right' }}>
+                    {cat.Name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {validationErrors.Categoryid && (
+                <Typography color="error" variant="body2" align="right">
+                  {validationErrors.Categoryid}
+                </Typography>
+              )}
+            </FormControl>
+
+            {/* מצרכים */}
+            <Typography variant="h6" align="center" sx={{ fontFamily: 'inherit' }}>
+              מצרכים
+            </Typography>
+            {editedRecipe.Ingridents.map((ingredient: Ingredient, index: number) => (
+              <Stack direction="row" spacing={2} key={index}>
+                <TextField
+                  label="שם"
+                  value={ingredient.Name}
+                  onChange={(e) => handleIngredientChange(e, index, 'Name')}
+                  fullWidth
+                  InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientName-${index}`]}
+                  helperText={validationErrors[`ingredientName-${index}`]}
+                />
+                <TextField
+                  label="כמות"
+                  value={ingredient.Count}
+                  onChange={(e) => handleIngredientChange(e, index, 'Count')}
+                  fullWidth
+                  InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientCount-${index}`]}
+                  helperText={validationErrors[`ingredientCount-${index}`]}
+                />
+                <TextField
+                  label="סוג"
+                  value={ingredient.Type}
+                  onChange={(e) => handleIngredientChange(e, index, 'Type')}
+                  fullWidth
+                  InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientType-${index}`]}
+                  helperText={validationErrors[`ingredientType-${index}`]}
+                />
+              </Stack>
+            ))}
+            <Button variant="contained" color="primary" onClick={addIngredient}>
+              הוסף מצרך
+            </Button>
+
+            {/* הוראות הכנה */}
+            <Typography variant="h6" align="center" sx={{ fontFamily: 'inherit' }}>
+              הוראות הכנה
+            </Typography>
+            {editedRecipe.Instructions.map((instruction: Instruction, index: number) => (
+              <TextField
+                key={index}
+                label={`הוראה ${index + 1}`}
+                value={instruction.Name}
+                onChange={(e) => handleInstructionChange(e, index)}
+                fullWidth
+                multiline
+                rows={2}
+                InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                error={!!validationErrors[`instruction-${index}`]}
+                helperText={validationErrors[`instruction-${index}`]}
+              />
+            ))}
+            <Button variant="contained" color="primary" onClick={addInstruction}>
+              הוסף הוראה
+            </Button>
+
+            <Button variant="contained" color="primary" onClick={handleSave} fullWidth>
+              שמור
+            </Button>
+          </Stack>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+export default EditRecipe;
+import { useContext, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { CircularProgress, Box, Typography } from '@mui/material';
+import EditRecipe from './EditRecipe';
+import { Recipe } from '../repositories/RecipeType';
+import { convertResRecipeToRecipeType, ResRecipe } from '../repositories/ResRecipe';
+import { detailsContext } from '../context/Provider';
+
+const EditRecipePage = () => {
+    const { id } = useParams(); // expects <Route path="/edit/:id" />
+    const [recipe, setRecipe] = useState<Recipe>();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const detailsContextProvider = useContext(detailsContext)
+
+    useEffect(() => {
+        const fetchRecipe = async () => {
+            try {
+                const response = await axios.get<ResRecipe>(`http://localhost:8080/api/recipe/${id}`);
+                console.log("Do you want to edit recipe with id: ", response.data.Id);
+                const fetchedRecipe = convertResRecipeToRecipeType(response.data); // המרת המתכון ל-RecipeType
+                setRecipe(fetchedRecipe);
+
+                // במקרה שהמשתמש הנוכחי לא ייצר את המתכון
+                if (response.data.UserId !== detailsContextProvider.id) {
+                    setError('אין לך הרשאה לערוך מתכון זה');
+                    return;
+                }
+            } catch (err) {
+                setError('שגיאה בטעינת המתכון');
+                console.log(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRecipe();
+    }, [id]);
+
+    if (loading) {
+        return <Box sx={{ textAlign: 'center', mt: 4 }}><CircularProgress /></Box>;
+    }
+
+    if (error || !recipe) {
+        return <Typography color="error" align="center">{error || 'לא נמצא מתכון'}</Typography>;
+    }
+
+    return (
+        <EditRecipe recipe={recipe} onSave={(updated: Recipe) => setRecipe(updated)} />
+    );
+};
+ 
+export default EditRecipePage;
+import { Box } from '@mui/material';
+import '../styles/global.css'
+import ImagesDashboard from './ImagesDashboard';
+import MySighInButton from './MySighInButton';
+import Grid from '@mui/material/Grid2';
+
+const Home = () => {
+    return (
+        <>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center', // מרכז את התוכן אופקית
+                    alignItems: 'center', // מרכז את התוכן אנכית
+                    padding: 2, // הוסף padding כדי למנוע חיתוך
+                    width:'100%'
+                }}
+            >
+                <Grid container spacing={1}>
+                    <Grid size={5} />
+                    <Grid size={12}>
+                        <p>מבחר ענק טעיםם ומרשיםם של מתכונים בריאים מקלי הכנה ועד להכנה מורכבת</p>
+                    </Grid>
+                    <MySighInButton />
+                    <Grid size={12}>
+                        <small>יש לנו המון מבחר המון סגנונות בטוח תמצאו משהו שיטעיםםם</small>
+                    </Grid>
+                    <Grid size={12}>
+                        <ImagesDashboard />
+                    </Grid>
+                </Grid>
+            </Box>
+
+        </>
+    );
+};
+
+export default Home;
+import '../styles/global.css'
+import milky from "../img/milky.jpg";
+import fleshy from "../img/fleshy.jpg";
+import petit_fours from "../img/petit_fours3.jpg";
+import children from "../img/child_food.jpg";
+import cake from '../img/cakes.jpg'
+import personal_cups from '../img/personal_cups.png'
+import ImageList from '@mui/material/ImageList';
+import ImageListItem from '@mui/material/ImageListItem';
+import ImageListItemBar from '@mui/material/ImageListItemBar';
+import IconButton from '@mui/material/IconButton';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+
+function srcset(image: string, width: number, height: number, rows = 1, cols = 1) {
+  return {
+    src: `${image}?w=${width * cols}&h=${height * rows}&fit=crop&auto=format`,
+    srcSet: `${image}?w=${width * cols}&h=${height * rows
+      }&fit=crop&auto=format&dpr=2 2x`,
+  };
+}
+
+
+
+export default function ImagesDashboard() {
+  return (
+    <ImageList
+      sx={{
+        width: '100%', // שינוי לרוחב 100%
+        height: 'auto', // גובה אוטומטי
+        transform: 'translateZ(0)',
+        objectFit: 'center',
+
+      }}
+      rowHeight={200}
+      gap={1}
+    >
+      {itemData.map((item) => {
+        const cols = item.featured ? 3 : 1;
+        const rows = item.featured ? 3 : 1;
+
+        return (
+          <ImageListItem key={item.img} cols={cols} rows={rows}>
+            <img
+              {...srcset(item.img, 250, 200, rows, cols)}
+              alt={item.title}
+              loading="lazy"
+            />
+            <ImageListItemBar
+              sx={{
+                background:
+                  'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, ' +
+                  'rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
+              }}
+              title={item.title}
+              position="top"
+              actionIcon={
+                <IconButton
+                  sx={{ color: 'white' }}
+                  aria-label={`star ${item.title}`}
+                >
+                  <StarBorderIcon />
+                </IconButton>
+              }
+              actionPosition="left"
+            />
+          </ImageListItem>
+        );
+      })}
+    </ImageList>
+  );
+}
+
+
+const itemData = [
+  {
+    img: personal_cups,
+    title: 'כוסות קינוח אישיות',
+    featured: true,
+  },
+  {
+    img: fleshy,
+    title: 'בשרים',
+    author: '@rollelflex_graphy726',
+  },
+  {
+    img: petit_fours,
+    title: 'פטיפורים',
+    author: '@helloimnik',
+  },
+  {
+    img: children,
+    title: 'אוכל שילדים אוהבים',
+    author: '@nolanissac',
+  },
+  {
+    img: cake,
+    title: 'עוגות',
+    author: '@hjrc33',
+  },
+  {
+    img: milky,
+    title: 'בר חלבי',
+    featured: true,
+  },
+];
+import '../styles/global.css';
+import axios from 'axios';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import IFormInput from '../repositories/IFormInput';
+import { useNavigate } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { detailsContext } from '../context/Provider';
+import { User } from '../repositories/User';
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Stack,
+    Alert,
+    Paper,
+} from '@mui/material';
+
+const Login = ({ isDarkMode }: { isDarkMode: boolean }) => {
+    const { register, handleSubmit, formState: { errors } } = useForm<IFormInput>();
+    const navigate = useNavigate();
+    const detailsContextProvider = useContext(detailsContext);
+    const [loginError, setLoginError] = useState('');
+
+    const onSubmit: SubmitHandler<IFormInput> = async user => {
+        try {
+            setLoginError('');            
+            const { data } = await axios.post<User>('http://localhost:8080/api/user/login', user);
+            detailsContextProvider.setMyId(data.Id);
+            detailsContextProvider.setMyName(data.Name);
+            detailsContextProvider.setMyEmail(data.Email);
+            detailsContextProvider.setMyPassword(data.Password);
+            navigate('/');
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 409) {
+                    navigate('/home');
+                } else if (error.response?.status === 401) {
+                    navigate('/sign-up');
+                } else {
+                    setLoginError('שגיאה בהתחברות. נסה שוב.');
+                }
+            }
+        }
+    };
+
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                backgroundColor: isDarkMode ? '#333' : '#fff',
+                color: isDarkMode ? '#fff' : '#000',
+                padding: 4,
+            }}
+            dir="rtl"
+        >
+            <Paper
+                elevation={4}
+                sx={{
+                    width: '100%',
+                    maxWidth: 400,
+                    padding: 4,
+                    borderRadius: 3,
+                    backgroundColor: isDarkMode ? '#424242' : '#f9f9f9',
+                }}
+            >
+                <Typography variant="h4" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    ברוכים הבאים לאתר המתכונים!
+                </Typography>
+                <Typography variant="h6" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    התחברות
+                </Typography>
+
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <Stack spacing={3}>
+                        <TextField
+                            label="שם משתמש"
+                            fullWidth
+                            {...register('UserName', {
+                                required: 'שדה חובה',
+                                minLength: {
+                                    value: 3,
+                                    message: 'לפחות 3 תווים',
+                                },
+                            })}
+                            error={!!errors.UserName}
+                            helperText={errors.UserName?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="סיסמה"
+                            type="password"
+                            fullWidth
+                            {...register('Password', {
+                                required: 'שדה חובה',
+                                minLength: {
+                                    value: 6,
+                                    message: 'לפחות 6 תווים',
+                                },
+                            })}
+                            error={!!errors.Password}
+                            helperText={errors.Password?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        {loginError && <Alert severity="error">{loginError}</Alert>}
+
+                        <Button variant="contained" color="primary" fullWidth type="submit">
+                            התחבר
+                        </Button>
+                    </Stack>
+                </form>
+            </Paper>
+        </Box>
+    );
+};
+
+export default Login;
+import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Typography from '@mui/material/Typography';
+import sigh from '../img/sigh-in.jpg'
+import login from '../img/login.jpg'
+import { Link } from 'react-router-dom';
+
+const images = [
+  {
+    id: 1,
+    url: sigh,
+    title: 'הרשמה',
+    width: '20%',
+  },
+  {
+    id: 2,
+    url: login,
+    title: 'כניסה',
+    width: '20%',
+  },
+];
+
+const ImageButton = styled(ButtonBase)(({ theme }) => ({
+  position: 'relative',
+  height: 200,
+  [theme.breakpoints.down('sm')]: {
+    width: '100% !important', // Overrides inline-style
+    height: 100,
+  },
+  '&:hover, &.Mui-focusVisible': {
+    zIndex: 1,
+    '& .MuiImageBackdrop-root': {
+      opacity: 0.15,
+    },
+    '& .MuiImageMarked-root': {
+      opacity: 0,
+    },
+    '& .MuiTypography-root': {
+      border: '4px solid currentColor',
+    },
+  },
+}));
+
+const ImageSrc = styled('span')({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center 40%',
+});
+
+const Image = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: theme.palette.common.white,
+}));
+
+const ImageBackdrop = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundColor: theme.palette.common.black,
+  opacity: 0.4,
+  transition: theme.transitions.create('opacity'),
+}));
+
+const ImageMarked = styled('span')(({ theme }) => ({
+  height: 3,
+  width: 18,
+  backgroundColor: theme.palette.common.white,
+  position: 'absolute',
+  bottom: -2,
+  left: 'calc(50% - 9px)',
+  transition: theme.transitions.create('opacity'),
+}));
+{/* <Grid size={4}>
+                            <div>
+                                <p>עדיין לא רשומים? לחצו כאן👇</p>
+                                <Link to="/login">אני רוצה לטעום</Link>
+                            </div>
+                        </Grid>
+                        <Grid size={8}>
+                            <div>
+                                <p>רשומים? לחצו כאן👇</p>
+                                <Link to="/login">זה היה טובב</Link>
+                            </div>
+                        </Grid> */}
+export default function MySighInButton() {
+  return (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', minWidth: 300, width: '100%' }}>
+      {images.map((image) => (
+        <ImageButton
+          focusRipple
+          key={image.title}
+          style={{
+            width: image.width,
+          }}
+        >
+          <ImageSrc style={{ backgroundImage: `url(${image.url})` }} />
+          <ImageBackdrop className="MuiImageBackdrop-root" />
+          <Image>
+            <Typography
+              component="span"
+              variant="subtitle1"
+              color="inherit"
+              sx={(theme) => ({
+                position: 'relative',
+                p: 4,
+                pt: 2,
+                pb: `calc(${theme.spacing(1)} + 6px)`,
+              })}
+            >
+               {image.id == 1 && (
+                <Link to="/sign-up">עדיין לא רשומים? לחצו כאן👇</Link> // ניתוב לדף ההרשמה
+              )}
+              {image.id == 2 && (
+                <Link to="/login">כבר רשומים? לחצו כאן👇</Link> // ניתוב לדף הכניסה
+              )}
+              {image.title}
+
+              <ImageMarked className="MuiImageMarked-root" />
+            </Typography>
+          </Image>
+        </ImageButton>
+      ))}
+    </Box>
+  );
+}
+import {
+    Card,
+    CardContent,
+    CardMedia,
+    Typography,
+    Chip,
+    Stack,
+    Divider,
+    Box,
+    useMediaQuery,
+    useTheme,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import { useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { detailsContext } from '../context/Provider';
+import axios from 'axios';
+
+const difficultyMap: Record<number, string> = {
+    1: 'קל',
+    2: 'בינוני',
+    3: 'קשה',
+};
+
+const difficultyColors: Record<string, string> = {
+    'קל': '#388e3c',
+    'בינוני': '#f9a825',
+    'קשה': '#d32f2f',
+};
+
+const Recipe = ({
+    Id,
+    title,
+    date,
+    image,
+    description,
+    method,
+    difficulty,
+    duration,
+    ingredients,
+    userId
+}: any) => {
+    const theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+    const navigate = useNavigate();
+    const detailsContextProvider = useContext(detailsContext);
+    const [unauthorized, setUnauthorized] = useState(false);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+    useEffect(() => {
+        // בדיקה אם המשתמש הנוכחי הוא בעל המתכון
+        if (userId !== detailsContextProvider.id) {
+            setUnauthorized(true); // אם לא, הצג הודעה שלא מורשה
+        }
+    }, [Id, detailsContextProvider.id]);
+
+    const handleEditClick = () => {
+        navigate(`/edit/${Id}`);
+    };
+
+    const handleDeleteClick = () => {
+        setOpenDeleteDialog(true); // הצגת דיאלוג אישור מחיקה
+    };
+
+    const handleConfirmDelete = async () => {
+        setOpenDeleteDialog(false);
+        try {
+            const res = await axios.post<any>(`http://localhost:8080/api/recipe/delete/${Id}`)
+            console.log(res);
+
+        }
+        catch (error) {
+            console.log('שגיאה במחיקת המתכון:', error);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setOpenDeleteDialog(false);
+    };
+
+    // המרת רמת הקושי למילים אם מדובר במספר
+    const difficultyText = typeof difficulty === 'number' ? difficultyMap[difficulty] || 'לא מוגדר' : difficulty;
+
+    return (
+        <Card
+            sx={{
+                maxWidth: '1000px',
+                margin: '30px auto',
+                borderRadius: 6,
+                boxShadow: 6,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+            dir="rtl"
+        >
+            <CardMedia
+                component="img"
+                height="360"
+                image={image}
+                alt={title}
+                sx={{ objectFit: 'cover' }}
+            />
+            <CardContent sx={{ padding: 4 }}>
+                <Typography
+                    gutterBottom
+                    variant="h4"
+                    component="div"
+                    sx={{ fontWeight: 'bold', textAlign: 'right' }}
+                >
+                    {title}
+                </Typography>
+                <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 3, textAlign: 'right' }}
+                >
+                    {description}
+                </Typography>
+                <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ mb: 3 }}
+                >
+                    <Chip
+                        icon={<WhatshotIcon />}
+                        label={difficultyText}
+                        sx={{
+                            backgroundColor: difficultyColors[difficultyText] || '#757575',
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            px: 2,
+                            py: 1
+                        }}
+                    />
+                    <Chip
+                        icon={<AccessTimeIcon />}
+                        label={`${duration} דקות`}
+                        sx={{
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                            px: 2,
+                            py: 1
+                        }}
+                    />
+                    <Box sx={{ flexGrow: 1 }} />
+                    <Typography variant="subtitle2" sx={{ mt: isSmallScreen ? 1 : 0, textAlign: 'left' }}>
+                        {date}
+                    </Typography>
+                </Stack>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, mt: 2, textAlign: 'right' }}>
+                    מצרכים:
+                </Typography>
+                <ul style={{ marginTop: 8, paddingRight: '20px' }}>
+                    {ingredients?.map((ingredient: any, idx: number) => (
+                        <li key={idx}>
+                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                {`${ingredient.Name} – ${ingredient.Count} ${ingredient.Type}`}
+                            </Typography>
+                        </li>
+                    ))}
+                </ul>
+                <Typography variant="h6" sx={{ fontWeight: 600, mt: 3, textAlign: 'right' }}>
+                    הוראות הכנה:
+                </Typography>
+                <ol style={{ marginTop: 8, paddingRight: '20px' }}>
+                    {method?.map((step: string, idx: number) => (
+                        <li key={idx}>
+                            <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                                {step}
+                            </Typography>
+                        </li>
+                    ))}
+                </ol>
+
+                {/* הצגת הודעה אם המשתמש לא יכול לערוך את המתכון */}
+                {unauthorized ? (
+                    <Typography variant="body1" color="error" align="center" sx={{ fontFamily: 'inherit', marginTop: 2 }}>
+                        אין לך הרשאה לערוך את המתכון הזה.
+                    </Typography>
+                ) : (
+                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleEditClick}
+                            sx={{ flex: 1 }}
+                        >
+                            ערוך מתכון
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={handleDeleteClick}
+                            sx={{ flex: 1 }}
+                        >
+                            מחק מתכון
+                        </Button>
+                    </Stack>
+                )}
+
+            </CardContent>
+
+
+            {/* דיאלוג אישור מחיקה */}
+            <Dialog open={openDeleteDialog} onClose={handleCancelDelete} dir="rtl">
+                <DialogTitle>אישור מחיקת מתכון</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                        האם אתה בטוח שברצונך למחוק את המתכון הזה? פעולה זו לא ניתנת לביטול.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelDelete} color="primary">
+                        ביטול
+                    </Button>
+                    <Button onClick={handleConfirmDelete} color="error">
+                        מחק
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Card>
+    );
+};
+
+export default Recipe;
+import '../styles/global.css';
+import axios from "axios";
+import RecipeType, { CategoryRes } from "../repositories/RecipeType";
+import { useEffect, useState } from "react";
+import Recipe from "./Recipe";
+import {
+    CssBaseline, extendTheme, ThemeProvider,
+    Select, MenuItem, InputLabel, FormControl,
+    Grid, Box, Typography, TextField
+} from '@mui/material';
+import anyFood from '../img/health_recipe.webp';
+
+const demoTheme = extendTheme({
+    typography: {
+        fontFamily: 'Heebo Thin',
+    },
+    colorSchemes: {
+        light: {
+            palette: {
+                primary: {
+                    main: '#1976d2',
+                },
+                secondary: {
+                    main: '#dc004e',
+                },
+            },
+        },
+        dark: {
+            palette: {
+                primary: {
+                    main: '#90caf9',
+                },
+                secondary: {
+                    main: '#f48fb1',
+                },
+            },
+        },
+    },
+    colorSchemeSelector: 'class',
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 600,
+            md: 600,
+            lg: 1200,
+            xl: 1536,
+        },
+    },
+});
+
+const Recipes = () => {
+    const [recipes, setRecipes] = useState<RecipeType[]>([]);
+    const [categories, setCategories] = useState<CategoryRes[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<number>(0);
+    const [selectedDifficulty, setSelectedDifficulty] = useState('');
+    const [durationFilter, setDurationFilter] = useState('');
+    const [createdByFilter, setCreatedByFilter] = useState('');
+
+    useEffect(() => {
+        const fetchRecipes = async () => {
+            try {
+                const res = await axios.get<RecipeType[]>('http://localhost:8080/api/recipe');
+                setRecipes(res.data);
+            } catch (error) {
+                console.log("Error fetching recipes:", error);
+            }
+        };
+
+        const fetchCategories = async () => {
+            try {
+                const res = await axios.get<CategoryRes[]>('http://localhost:8080/api/category');
+                setCategories(res.data);
+            } catch (error) {
+                console.log("Error fetching categories:", error);
+            }
+        };
+
+        fetchRecipes();
+        fetchCategories();
+    }, []);
+
+    // מיפוי הערכים בין רמות קושי למספרים
+    const difficultyMap: Record<string, number> = {
+        'קל': 1,
+        'בינוני': 2,
+        'קשה': 3,
+    };
+
+    // פונקציית סינון
+    const filteredRecipes = recipes.filter((recipe) => {
+        return (
+            (selectedCategory === 0 || recipe.Categoryid === selectedCategory) &&
+            (selectedDifficulty === '' || Number(recipe.Difficulty) === difficultyMap[selectedDifficulty]) &&
+            (durationFilter === '' || recipe.Duration.toString() === durationFilter) &&
+            (createdByFilter === '' || recipe.UserId.toString().toLowerCase().includes(createdByFilter.toLowerCase()))
+        );
+    });
+
+    return (
+        <ThemeProvider theme={demoTheme}>
+            <CssBaseline />
+            <Grid container spacing={2} sx={{ px: 2, mt: 2 }}>
+                {/* אזור המתכונים */}
+                <Grid item xs={12} md={9}>
+                    <Grid container justifyContent="center">
+                        {filteredRecipes.length === 0 ? (
+                            <Typography variant="h6" sx={{ mt: 4 }}>
+                                לא נמצאו מתכונים שתואמים לסינון
+                            </Typography>
+                        ) : (
+                            filteredRecipes.map((recipe) => (
+                                <Grid item xs={12} sm={10} md={8} key={recipe.Id}>
+                                    <Recipe
+                                        Id={recipe.Id}
+                                        title={recipe.Name}
+                                        date={new Date(recipe.createdAt).toLocaleDateString('he-IL')}
+                                        image={recipe.Img ? recipe.Img : anyFood}
+                                        description={recipe.Description}
+                                        method={recipe.Instructions.map(instruction => instruction.Name)}
+                                        difficulty={recipe.Difficulty}
+                                        duration={recipe.Duration}
+                                        userId={recipe.UserId}
+                                        categoryId={recipe.Categoryid}
+                                        ingredients={recipe.Ingridents}
+                                        instructions={recipe.Instructions}
+                                    />
+                                </Grid>
+                            ))
+                        )}
+                    </Grid>
+                </Grid>
+
+                {/* אזור הסינון בצד ימין */}
+                <Grid item xs={12} md={3}>
+                    <Box
+                        sx={{
+                            position: 'sticky',
+                            top: 20,
+                            bgcolor: 'background.paper',
+                            borderRadius: 2,
+                            p: 2,
+                            boxShadow: 2,
+                            minWidth: '100%',
+                        }}
+                    >
+                        <Typography variant="h6" gutterBottom>סינון מתכונים</Typography>
+
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>קטגוריה</InputLabel>
+                            <Select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(Number(e.target.value))}
+                                label="קטגוריה"
+                            >
+                                <MenuItem value={0}>הכול</MenuItem>
+                                {categories.map((category) => (
+                                    <MenuItem key={category.Id} value={category.Id}>{category.Name}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel>רמת קושי</InputLabel>
+                            <Select
+                                value={selectedDifficulty}
+                                onChange={(e) => setSelectedDifficulty(e.target.value)}
+                                label="רמת קושי"
+                            >
+                                <MenuItem value="">הכול</MenuItem>
+                                <MenuItem value="קל">קל</MenuItem>
+                                <MenuItem value="בינוני">בינוני</MenuItem>
+                                <MenuItem value="קשה">קשה</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label="משך זמן (בדקות)"
+                            value={durationFilter}
+                            onChange={(e) => setDurationFilter(e.target.value)}
+                            type="number"
+                        />
+
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label="נוצר על ידי (User ID)"
+                            value={createdByFilter}
+                            onChange={(e) => setCreatedByFilter(e.target.value)}
+                        />
+                    </Box>
+                </Grid>
+            </Grid>
+        </ThemeProvider>
+    );
+};
+
+export default Recipes;
+import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Typography from '@mui/material/Typography';
+import homeImg from '../img/many_food.jpg'
+import recipes from '../img/recipes.jpg'
+import concat from '../img/concat.jpg'
+
+const images = [
+  {
+    url: homeImg,
+    title: 'עמוד הבית',
+    width: '40%',
+  },
+  {
+    url: recipes,
+    title: 'מתכונים',
+    width: '30%',
+  },
+  {
+    url: concat,
+    title: 'צור קשר',
+    width: '30%',
+  },
+  ,
+  {
+    url: concat,
+    title: 'הוספת מתכון',
+    width: '30%',
+  },
+  ,
+  {
+    url: concat,
+    title: 'עריכת מתכון',
+    width: '30%',
+  }
+];
+
+const ImageButton = styled(ButtonBase)(({ theme }) => ({
+  position: 'relative',
+  height: 200,
+  [theme.breakpoints.down('sm')]: {
+    width: '100% !important', // Overrides inline-style
+    height: 100,
+  },
+  '&:hover, &.Mui-focusVisible': {
+    zIndex: 1,
+    '& .MuiImageBackdrop-root': {
+      opacity: 0.15,
+    },
+    '& .MuiImageMarked-root': {
+      opacity: 0,
+    },
+    '& .MuiTypography-root': {
+      border: '4px solid currentColor',
+    },
+  },
+}));
+
+const ImageSrc = styled('span')({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center 40%',
+});
+
+const Image = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: theme.palette.common.white,
+}));
+
+const ImageBackdrop = styled('span')(({ theme }) => ({
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  top: 0,
+  bottom: 0,
+  backgroundColor: theme.palette.common.black,
+  opacity: 0.4,
+  transition: theme.transitions.create('opacity'),
+}));
+
+const ImageMarked = styled('span')(({ theme }) => ({
+  height: 3,
+  width: 18,
+  backgroundColor: theme.palette.common.white,
+  position: 'absolute',
+  bottom: -2,
+  left: 'calc(50% - 9px)',
+  transition: theme.transitions.create('opacity'),
+}));
+
+export default function ButtonBaseDemo() {
+  return (
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', minWidth: 300, width: '100%' }}>
+      {images.map((image) => (
+        <ImageButton
+          focusRipple
+          key={image?.title}
+          style={{
+            width: image?.width,
+          }}
+        >
+          <ImageSrc style={{ backgroundImage: `url(${image?.url})` }} />
+          <ImageBackdrop className="MuiImageBackdrop-root" />
+          <Image>
+            <Typography
+              component="span"
+              variant="subtitle1"
+              color="inherit"
+              sx={(theme) => ({
+                position: 'relative',
+                p: 4,
+                pt: 2,
+                pb: `calc(${theme.spacing(1)} + 6px)`,
+              })}
+            >
+              {image?.title}
+              <ImageMarked className="MuiImageMarked-root" />
+            </Typography>
+          </Image>
+        </ImageButton>
+      ))}
+    </Box>
+  );
+}
+import '../styles/global.css';
+import axios from 'axios';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { detailsContext } from '../context/Provider';
+
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Stack,
+    Alert,
+    Paper,
+} from '@mui/material';
+import { UserSignUp, UserSignUpRes } from '../repositories/IFormInputSignUp';
+
+const SignUp = ({ isDarkMode }: { isDarkMode: boolean }) => {
+    const navigate = useNavigate();
+    const { register, handleSubmit, formState: { errors } } = useForm<UserSignUp>();
+    const detailsContextProvider = useContext(detailsContext);
+    const [signUpError, setSignUpError] = useState('');
+
+    const onSubmit: SubmitHandler<UserSignUp> = async user => {
+        setSignUpError('');
+        try {
+            console.log("User: ", user);
+            
+            const { data } = await axios.post<UserSignUpRes>('http://localhost:8080/api/user/sighin', user);
+            detailsContextProvider.setMyId(data.Id);
+            detailsContextProvider.setMyName(data.Name);
+            detailsContextProvider.setMyEmail(data.Email);
+            detailsContextProvider.setMyPassword(data.Password);
+            navigate('/');
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                setSignUpError('שגיאה בהרשמה. נסו שוב.');
+            } else {
+                setSignUpError('אירעה שגיאה כללית.');
+            }
+        }
+    };
+
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                backgroundColor: isDarkMode ? '#333' : '#fff',
+                color: isDarkMode ? '#fff' : '#000',
+                padding: 4,
+            }}
+            dir="rtl"
+        >
+            <Paper
+                elevation={4}
+                sx={{
+                    width: '100%',
+                    maxWidth: 500,
+                    padding: 4,
+                    borderRadius: 3,
+                    backgroundColor: isDarkMode ? '#424242' : '#f9f9f9',
+                }}
+            >
+                <Typography variant="h4" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    איזה כיף שאתם מצטרפים אלינו!
+                </Typography>
+                <Typography variant="h6" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    הכניסו את פרטיכם:
+                </Typography>
+
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <Stack spacing={3}>
+                        <TextField
+                            label="שם משתמש"
+                            fullWidth
+                            {...register('UserName', {
+                                required: 'שדה חובה',
+                                minLength: { value: 3, message: 'לפחות 3 תווים' },
+                            })}
+                            error={!!errors.UserName}
+                            helperText={errors.UserName?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="סיסמה"
+                            type="password"
+                            fullWidth
+                            {...register('Password', {
+                                required: 'שדה חובה',
+                                minLength: { value: 6, message: 'לפחות 6 תווים' },
+                            })}
+                            error={!!errors.Password}
+                            helperText={errors.Password?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="שם מלא"
+                            fullWidth
+                            {...register('Name', {
+                                required: 'שדה חובה',
+                            })}
+                            error={!!errors.Name}
+                            helperText={errors.Name?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="טלפון"
+                            fullWidth
+                            {...register('Phone', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[0-9]{9,10}$/,
+                                    message: 'מספר טלפון לא תקין',
+                                },
+                            })}
+                            error={!!errors.Phone}
+                            helperText={errors.Phone?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="מייל"
+                            fullWidth
+                            type="email"
+                            {...register('Email', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                    message: 'כתובת מייל לא תקינה',
+                                },
+                            })}
+                            error={!!errors.Email}
+                            helperText={errors.Email?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        <TextField
+                            label="תעודת זהות"
+                            fullWidth
+                            {...register('Tz', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[0-9]{9}$/,
+                                    message: 'מספר זהות לא תקין',
+                                },
+                            })}
+                            error={!!errors.Tz}
+                            helperText={errors.Tz?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
+
+                        {signUpError && <Alert severity="error">{signUpError}</Alert>}
+
+                        <Button variant="contained" color="primary" fullWidth type="submit">
+                            הרשמה
+                        </Button>
+                    </Stack>
+                </form>
+            </Paper>
+        </Box>
+    );
+};
+
+export default SignUp;

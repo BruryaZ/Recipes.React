@@ -1,9 +1,12 @@
 import '../styles/global.css';
 import { extendTheme } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ContactSupportIcon from '@mui/icons-material/ContactSupport';
 import { AppProvider, Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Typography, Avatar } from '@mui/material';
 import { useDemoRouter } from '@toolpad/core/internal';
 import Home from './Home';
 import Recipes from './Recipes';
@@ -21,7 +24,7 @@ const demoTheme = extendTheme({
         light: {
             palette: {
                 primary: {
-                    main: '#1976d2', // הצבעים כאן הם לדוגמה
+                    main: '#1976d2',
                 },
                 secondary: {
                     main: '#dc004e',
@@ -39,30 +42,20 @@ const demoTheme = extendTheme({
             },
         },
     },
-    colorSchemeSelector: 'class', // מאפשר למערכת לבחור את מצב הצבעים
+    colorSchemeSelector: 'class',
 });
 
 const DemoPageContent = ({ pathname }: { pathname: string }) => {
     const { id } = useContext(detailsContext);
-    const navigate = useNavigate();  // הוספת הניווט
+    const navigate = useNavigate();
 
-    // אם המשתמש לא מחובר והוא מנסה לגשת לעמוד שבו הוא לא מורשה
     useEffect(() => {
         if (id === -1) {
-            if (pathname === '/add-recipe' || pathname === '/recipes') {
-                // אם המשתמש לא מחובר, נווט לעמוד התחברות
+            if (pathname === '/add-recipe' || pathname === '/recipes' || pathname === '/dashboard') {
                 navigate('/login');
             }
         }
     }, [id, pathname, navigate]);
-
-    if (pathname === '/add-recipe' && id === -1) {
-        return <Typography color="error">עליך להתחבר כדי להוסיף מתכון</Typography>;
-    }
-
-    if (pathname === '/recipes' && id === -1) {
-        return <Typography color="error">עליך להתחבר כדי לצפות במתכונים שלנו</Typography>;
-    }
 
     switch (pathname) {
         case '/home':
@@ -85,54 +78,93 @@ const DemoPageContent = ({ pathname }: { pathname: string }) => {
 export default function Dashboard({ window }: { window?: () => Window }) {
     const router = useDemoRouter('/home');
     const demoWindow = window ? window() : undefined;
-    const { id, name, setMyId } = useContext(detailsContext); // כאן אנחנו מקבלים את כל פרטי המשתמש
+    const { id, name, setMyId } = useContext(detailsContext);
     const isLoggedIn = id !== -1;
-    const nav = useNavigate()
+    const nav = useNavigate();
 
     const NAVIGATION: Navigation = [
         {
             kind: 'header',
-            title: 'לבחירתך :)',
+            title: 'תפריט ראשי',
         },
         {
             segment: 'home',
-            title: 'ברוכים הבאים לאתר המתכונים שלנו',
+            title: 'עמוד הבית',
             icon: <DashboardIcon />,
         },
         {
             segment: 'recipes',
-            title: 'הצגת מתכונים',
-            icon: '🍳',
+            title: 'מתכונים',
+            icon: <RestaurantIcon />,
         },
         {
             segment: 'add-recipe',
             title: 'הוספת מתכון',
-            icon: '➕',
+            icon: <AddCircleOutlineIcon />,
         },
         {
             segment: 'contact',
             title: 'צור קשר',
-            icon: '📞',
+            icon: <ContactSupportIcon />,
         },
     ];
 
     return (
         <AppProvider navigation={NAVIGATION} router={router} theme={demoTheme} window={demoWindow}>
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                {/* Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, padding: 2 }}>
-                    {isLoggedIn ? (
-                        <>
-                            <Typography>שלום, {name}</Typography>
-                            <Button variant="outlined" onClick={() => setMyId(-1)}>התנתקות</Button>
-                        </>
-                    ) : (
-                        <Button variant="contained" onClick={() => { nav('/login') }}>התחברות</Button>
-                    )}
-                </Box>
-
-                {/* Dashboard Content */}
                 <DashboardLayout>
+                    {/* כותרת עליונה עם ברכה ומשתמש */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px 24px',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            backgroundColor: 'background.paper',
+                        }}
+                        dir="rtl"
+                    >
+                        <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                            אתר המתכונים
+                        </Typography>
+
+                        {isLoggedIn ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        py: 0.5,
+                                        px: 2,
+                                        borderRadius: 20,
+                                        bgcolor: 'action.hover',
+                                    }}
+                                >
+                                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                                        {name?.charAt(0)?.toUpperCase()}
+                                    </Avatar>
+                                    <Typography>שלום, {name}</Typography>
+                                </Box>
+                                <Button variant="outlined" size="small" onClick={() => setMyId(-1)} sx={{ borderRadius: 2, backgroundColor: '#1e1e1e' }}>
+                                    התנתקות
+                                </Button>
+                            </Box>
+                        ) : (
+                            <Button
+                                variant="contained"
+                                size="small"
+                                onClick={() => nav('/login')}
+                                sx={{ borderRadius: 2, backgroundColor: '#90caf9' }}
+                            >
+                                התחברות
+                            </Button>
+                        )}
+                    </Box>
+
+                    {/* תוכן הדף */}
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 2 }}>
                         <DemoPageContent pathname={router.pathname} />
                     </Box>
