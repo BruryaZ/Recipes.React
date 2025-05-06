@@ -1,8 +1,8 @@
 const User = require('../model/user')
 
-const LoginDb = (Name, Password) => {
+const LoginDb = (UserName, Password) => {
 
-    return User.findOne({ where: { Name, Password } });
+    return User.findOne({ where: { UserName, Password } });
 }
 
 const SighinDb = (user) => {

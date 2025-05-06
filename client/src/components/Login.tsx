@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { detailsContext } from '../context/Provider';
 import { User } from '../repositories/User';
-
 import {
     Box,
     Button,
@@ -25,7 +24,7 @@ const Login = ({ isDarkMode }: { isDarkMode: boolean }) => {
 
     const onSubmit: SubmitHandler<IFormInput> = async user => {
         try {
-            setLoginError('');
+            setLoginError('');            
             const { data } = await axios.post<User>('http://localhost:8080/api/user/login', user);
             detailsContextProvider.setMyId(data.Id);
             detailsContextProvider.setMyName(data.Name);
@@ -89,8 +88,14 @@ const Login = ({ isDarkMode }: { isDarkMode: boolean }) => {
                             })}
                             error={!!errors.UserName}
                             helperText={errors.UserName?.message}
-                            InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
-                            InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
                         />
 
                         <TextField
@@ -106,8 +111,14 @@ const Login = ({ isDarkMode }: { isDarkMode: boolean }) => {
                             })}
                             error={!!errors.Password}
                             helperText={errors.Password?.message}
-                            InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
-                            InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
                         />
 
                         {loginError && <Alert severity="error">{loginError}</Alert>}

@@ -1,26 +1,29 @@
-/* body{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    direction: rtl;
-}
-
-div, form{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-} */
-
 body,
 div,
-form {
-    text-align: rtl;
+form,
+label,
+input,
+button,
+Button {
+    text-align: right;
     font-family: Heebo Thin;
 }
 
 body {
     margin: 0;
     overflow-x: hidden;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    min-width: 100%;
+}
+
+input {
+    direction: rtl;
+    text-align: right;
 }

@@ -54,10 +54,6 @@ const Recipe = ({
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
     useEffect(() => {
-        console.log('Recipe component mounted with Id:', Id);
-        console.log('Current user id:', detailsContextProvider.id);
-        
-        
         // בדיקה אם המשתמש הנוכחי הוא בעל המתכון
         if (userId !== detailsContextProvider.id) {
             setUnauthorized(true); // אם לא, הצג הודעה שלא מורשה

@@ -18,6 +18,7 @@ const EditRecipePage = () => {
         const fetchRecipe = async () => {
             try {
                 const response = await axios.get<ResRecipe>(`http://localhost:8080/api/recipe/${id}`);
+                console.log("Do you want to edit recipe with id: ", response.data.Id);
                 const fetchedRecipe = convertResRecipeToRecipeType(response.data); // המרת המתכון ל-RecipeType
                 setRecipe(fetchedRecipe);
 

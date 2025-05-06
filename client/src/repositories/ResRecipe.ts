@@ -25,7 +25,7 @@ export function convertResRecipeToRecipeType(resRecipe: ResRecipe): Recipe {
         Duration: resRecipe.Duration,
         Description: resRecipe.Description,
         UserId: resRecipe.UserId,
-        CategoryId: resRecipe.Categoryid ?? 0, // אם Categoryid הוא null, נשתמש ב-0
+        Categoryid: resRecipe.Categoryid ?? 1, 
         Img: resRecipe.Img,
         Ingridents: resRecipe.Ingridents,
     };
@@ -41,7 +41,7 @@ export function convertRecipeTypeToResRecipe(recipeType: Recipe): ResRecipe {
         Duration: recipeType.Duration,
         Difficulty: recipeType.Difficulty,
         Description: recipeType.Description,
-        Categoryid: recipeType.CategoryId,
+        Categoryid: recipeType.Categoryid,
         Ingridents: recipeType.Ingridents,
         Instructions: recipeType.Instructions.map(instruction => ({ Name: instruction.Name })),
         createdAt: "",

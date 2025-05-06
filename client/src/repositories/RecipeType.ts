@@ -6,7 +6,7 @@ type RecipeType = {
     Duration: number,
     Description: string,
     UserId: number,
-    CategoryId: number,
+    Categoryid: number,
     Img: string,
     Ingridents: Ingredient[],
     createdAt: string,
@@ -27,7 +27,7 @@ export interface Recipe {
     Id: number;
     Name: string;
     UserId: number;
-    CategoryId: number;
+    Categoryid: number;
     Img: string;
     Duration: number;
     Difficulty: number;
@@ -39,6 +39,13 @@ export interface Recipe {
 export interface Category {
     Id: number;
     Name: string;
+}
+
+export interface CategoryRes {
+    Id: number;
+    Name: string;
+    UpdatedAt: string;
+    CreatedAt: string;
 }
 
 export default RecipeType;

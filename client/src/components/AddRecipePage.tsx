@@ -1,14 +1,14 @@
 import { useContext, useState, useEffect } from 'react';
 import { Category, Recipe } from '../repositories/RecipeType';
 import axios from 'axios';
-import { ResRecipe, convertResRecipeToRecipeType } from '../repositories/ResRecipe';
 import { detailsContext } from '../context/Provider';
 import AddRecipe from './AddRecipe';
+import { useNavigate } from 'react-router-dom';
 
 const AddRecipePage = () => {
   const detailsContextProvider = useContext(detailsContext);
   const [categories, setCategories] = useState<Category[]>([]);
-
+  const nav = useNavigate()
   useEffect(() => {
     // טעינת הקטגוריות מראש
     const loadCategories = async () => {
@@ -26,7 +26,7 @@ const AddRecipePage = () => {
     Id: 0,
     Name: '',
     UserId: detailsContextProvider.id,
-    CategoryId: 0,
+    Categoryid: 1,
     Img: '',
     Duration: 0,
     Difficulty: 1,
@@ -35,15 +35,10 @@ const AddRecipePage = () => {
     Instructions: [{ Name: '' }],
   });
 
-  const handleSave = async (recipeToSave: Recipe) => {
-    try {
-      const res = await axios.post<ResRecipe>('http://localhost:8080/api/recipe', recipeToSave);
-      const created = convertResRecipeToRecipeType(res.data);
-      alert('המתכון נוסף בהצלחה!');
-      setNewRecipe(created); // או איפוס מחדש אם תרצי
-    } catch (error) {
-      console.log('שגיאה ביצירת מתכון:', error);
-    }
+  const handleSave = (savedRecipe: Recipe) => {
+    alert('המתכון נוסף בהצלחה!');
+    setNewRecipe(savedRecipe); // או לאפס ל־default אם רוצים
+    nav('/recipes'); // נווט לדף המתכונים
   };
 
   return (

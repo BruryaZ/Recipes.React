@@ -1,10 +1,8 @@
 const { LoginDb, SighinDb } = require("../reposetory/user");
 
 const Login = (req, res) => {
-    console.log(req.body);
-
-    const { Name, Password } = req.body;
-    LoginDb(Name, Password)
+    const { UserName, Password } = req.body;
+    LoginDb(UserName, Password)
         .then(findUser => {
             if (findUser) {
                 return res.send(findUser)

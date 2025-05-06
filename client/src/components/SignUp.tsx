@@ -1,86 +1,213 @@
-import '../styles/global.css'
-import axios from "axios";
-import { SubmitHandler, useForm } from "react-hook-form";
-import IFormInputSignUp from "../repositories/IFormInputSignUp";
+import '../styles/global.css';
+import axios from 'axios';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { detailsContext } from '../context/Provider';
 
-const SignUp = () => {
-    const navigate = useNavigate()
-    const { register, handleSubmit, formState: { errors } } = useForm<IFormInputSignUp>({
-        // resolver: yupResolver(validationSchema)
-    })
-    // const globalContextDetails = useContext(globalContext)
-    const detailsContextProvider = useContext(detailsContext)
-    const onSubmit: SubmitHandler<IFormInputSignUp> = async user => {
-        console.log('signing in!');
-        user = { ...user, Id: 0 };
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Stack,
+    Alert,
+    Paper,
+} from '@mui/material';
+import { UserSignUp, UserSignUpRes } from '../repositories/IFormInputSignUp';
 
+const SignUp = ({ isDarkMode }: { isDarkMode: boolean }) => {
+    const navigate = useNavigate();
+    const { register, handleSubmit, formState: { errors } } = useForm<UserSignUp>();
+    const detailsContextProvider = useContext(detailsContext);
+    const [signUpError, setSignUpError] = useState('');
+
+    const onSubmit: SubmitHandler<UserSignUp> = async user => {
+        setSignUpError('');
         try {
-            const {data} = await axios.post<IFormInputSignUp>('http://localhost:8080/api/user/sighin', user);
+            console.log("User: ", user);
+            
+            const { data } = await axios.post<UserSignUpRes>('http://localhost:8080/api/user/sighin', user);
             detailsContextProvider.setMyId(data.Id);
             detailsContextProvider.setMyName(data.Name);
             detailsContextProvider.setMyEmail(data.Email);
             detailsContextProvider.setMyPassword(data.Password);
             navigate('/');
-        } 
-        
-        catch (error) {
+        } catch (error) {
             if (axios.isAxiosError(error)) {
-                console.log('Axios Registration failed:', error.message);
+                setSignUpError('שגיאה בהרשמה. נסו שוב.');
             } else {
-                console.log('Registration failed:', error);
+                setSignUpError('אירעה שגיאה כללית.');
             }
         }
-    }
+    };
 
     return (
-        <div>
-            <h1>איזה כיף שאתם מצטרפים אלינו!</h1>
-            <h2>הכניסו את פרטיכם:</h2>
+        <Box
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+                backgroundColor: isDarkMode ? '#333' : '#fff',
+                color: isDarkMode ? '#fff' : '#000',
+                padding: 4,
+            }}
+            dir="rtl"
+        >
+            <Paper
+                elevation={4}
+                sx={{
+                    width: '100%',
+                    maxWidth: 500,
+                    padding: 4,
+                    borderRadius: 3,
+                    backgroundColor: isDarkMode ? '#424242' : '#f9f9f9',
+                }}
+            >
+                <Typography variant="h4" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    איזה כיף שאתם מצטרפים אלינו!
+                </Typography>
+                <Typography variant="h6" align="center" gutterBottom sx={{ fontFamily: 'inherit' }}>
+                    הכניסו את פרטיכם:
+                </Typography>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div>
-                    <label htmlFor="Username">שם לאתר שלנו</label>
-                    <input id="Username" {...register('UserName')} />
-                    {errors.UserName && <small>{errors.UserName.message}</small>}
-                </div>
+                <form onSubmit={handleSubmit(onSubmit)} noValidate>
+                    <Stack spacing={3}>
+                        <TextField
+                            label="שם משתמש"
+                            fullWidth
+                            {...register('UserName', {
+                                required: 'שדה חובה',
+                                minLength: { value: 3, message: 'לפחות 3 תווים' },
+                            })}
+                            error={!!errors.UserName}
+                            helperText={errors.UserName?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <div>
-                    <label htmlFor="Password">סיסמא</label>
-                    <input id="Password" type="Password" {...register('Password')} />
-                    {errors.Password && <small>{errors.Password.message}</small>}
-                </div>
+                        <TextField
+                            label="סיסמה"
+                            type="password"
+                            fullWidth
+                            {...register('Password', {
+                                required: 'שדה חובה',
+                                minLength: { value: 6, message: 'לפחות 6 תווים' },
+                            })}
+                            error={!!errors.Password}
+                            helperText={errors.Password?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <div>
-                    <label htmlFor="Name">שם מלא</label>
-                    <input id="Name" {...register('Name')} />
-                    {errors.Name && <small>{errors.Name.message}</small>}
-                </div>
+                        <TextField
+                            label="שם מלא"
+                            fullWidth
+                            {...register('Name', {
+                                required: 'שדה חובה',
+                            })}
+                            error={!!errors.Name}
+                            helperText={errors.Name?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <div>
-                    <label htmlFor="Phone">טלפון</label>
-                    <input id="Phone" {...register('Phone')} />
-                    {errors.Phone && <small>{errors.Phone.message}</small>}
-                </div>
+                        <TextField
+                            label="טלפון"
+                            fullWidth
+                            {...register('Phone', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[0-9]{9,10}$/,
+                                    message: 'מספר טלפון לא תקין',
+                                },
+                            })}
+                            error={!!errors.Phone}
+                            helperText={errors.Phone?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <div>
-                    <label htmlFor="Email">מייל</label>
-                    <input id="Email" type="Email" {...register('Email')} />
-                    {errors.Email && <small>{errors.Email.message}</small>}
-                </div>
+                        <TextField
+                            label="מייל"
+                            fullWidth
+                            type="email"
+                            {...register('Email', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                    message: 'כתובת מייל לא תקינה',
+                                },
+                            })}
+                            error={!!errors.Email}
+                            helperText={errors.Email?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <div>
-                    <label htmlFor="Tz">תעודת זהות</label>
-                    <input id="Tz" {...register('Tz')} />
-                    {errors.Tz && <small>{errors.Tz.message}</small>}
-                </div>
+                        <TextField
+                            label="תעודת זהות"
+                            fullWidth
+                            {...register('Tz', {
+                                required: 'שדה חובה',
+                                pattern: {
+                                    value: /^[0-9]{9}$/,
+                                    message: 'מספר זהות לא תקין',
+                                },
+                            })}
+                            error={!!errors.Tz}
+                            helperText={errors.Tz?.message}
+                            InputLabelProps={{ style: { fontFamily: 'inherit' } }}
+                            inputProps={{
+                                dir: 'rtl',
+                                style: {
+                                    fontFamily: 'inherit',
+                                    textAlign: 'right',
+                                },
+                            }}
+                        />
 
-                <button type="submit">להרשמה</button>
-            </form>
-        </div>
-    )
-}
+                        {signUpError && <Alert severity="error">{signUpError}</Alert>}
+
+                        <Button variant="contained" color="primary" fullWidth type="submit">
+                            הרשמה
+                        </Button>
+                    </Stack>
+                </form>
+            </Paper>
+        </Box>
+    );
+};
 
 export default SignUp;

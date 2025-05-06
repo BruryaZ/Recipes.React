@@ -14,30 +14,41 @@ import axios from 'axios';
 import { Category, Ingredient, Instruction, Recipe } from '../repositories/RecipeType';
 import { ResRecipe } from '../repositories/ResRecipe';
 import { detailsContext } from '../context/Provider';
+import { useNavigate } from 'react-router-dom';
 
 const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
   const [editedRecipe, setEditedRecipe] = useState<Recipe>({ ...recipe });
   const [categories, setCategories] = useState<Category[]>([]);
   const [unauthorized, setUnauthorized] = useState(false);  // משתנה להודעות לא מורשה
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   const detailsContextProvider = useContext(detailsContext);
+  const nav = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await axios.get<Category[]>('http://localhost:8080/api/category');
         setCategories(res.data);
+
+        // אם אין קטגוריה נבחרת במתכון, קובעים את הראשונה כברירת מחדל
+        if (!editedRecipe.Categoryid && res.data.length > 0) {
+          setEditedRecipe((prev) => ({
+            ...prev,
+            Categoryid: res.data[0].Id,
+          }));
+        }
       } catch (error) {
         console.log('שגיאה בטעינת קטגוריות:', error);
       }
     };
 
-    // בדיקה אם המשתמש הוא בעל המתכון
     if (recipe.UserId !== detailsContextProvider.id) {
-      setUnauthorized(true); // אם לא, הצג הודעה שלא מורשה
+      setUnauthorized(true);
     }
 
     fetchCategories();
   }, [recipe, detailsContextProvider.id]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any, field: string) => {
     setEditedRecipe((prev) => ({
@@ -85,13 +96,35 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
     }));
   };
 
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!editedRecipe.Name) errors.Name = 'שם המתכון הוא שדה חובה';
+    if (!editedRecipe.Description) errors.Description = 'תיאור המתכון הוא שדה חובה';
+    if (!editedRecipe.Categoryid) errors.Categoryid = 'קטגוריה היא שדה חובה';
+    if (!editedRecipe.Duration || editedRecipe.Duration <= 0) errors.Duration = 'משך זמן הכנה חייב להיות מספר חיובי';
+
+    editedRecipe.Ingridents.forEach((ingredient, index) => {
+      if (!ingredient.Name) errors[`ingredientName-${index}`] = `שם המצרך ${index + 1} הוא שדה חובה`;
+      if (!ingredient.Count) errors[`ingredientCount-${index}`] = `כמות המצרך ${index + 1} היא שדה חובה`;
+      if (!ingredient.Type) errors[`ingredientType-${index}`] = `סוג המצרך ${index + 1} הוא שדה חובה`;
+    });
+
+    editedRecipe.Instructions.forEach((instruction, index) => {
+      if (!instruction.Name) errors[`instruction-${index}`] = `הוראת הכנה ${index + 1} היא שדה חובה`;
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0; // אם אין שגיאות
+  };
+
   const handleSave = async () => {
+    if (!validateForm()) return; // אם יש שגיאות, לא נמשיך
+
     try {
-      editedRecipe.Id = detailsContextProvider.id;
-      console.log('Saving recipe:', editedRecipe);
       const res = await axios.post<ResRecipe>('http://localhost:8080/api/recipe/edit', editedRecipe);
-      console.log(res.data);
       onSave(res.data);
+      nav('/recipes'); // חזרה לדף הבית לאחר שמירה
     } catch (error) {
       console.log('Error saving recipe:', error);
     }
@@ -131,6 +164,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
               fullWidth
               InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
               InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Name}
+              helperText={validationErrors.Name}
             />
             <TextField
               label="תיאור"
@@ -139,6 +174,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
               fullWidth
               InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
               InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Description}
+              helperText={validationErrors.Description}
             />
             <TextField
               label="רמת קושי"
@@ -156,6 +193,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
               fullWidth
               InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
               InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+              error={!!validationErrors.Duration}
+              helperText={validationErrors.Duration}
             />
 
             {/* שדה קטגוריה */}
@@ -165,15 +204,16 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
               </InputLabel>
               <Select
                 labelId="category-label"
-                value={editedRecipe.CategoryId || ''}
+                value={editedRecipe.Categoryid || ''}
                 label="קטגוריה"
                 onChange={(e) =>
                   setEditedRecipe((prev) => ({
                     ...prev,
-                    CategoryId: parseInt(e.target.value as string),
+                    Categoryid: parseInt(e.target.value as string),
                   }))
                 }
                 style={{ fontFamily: 'inherit', textAlign: 'right' }}
+                error={!!validationErrors.Categoryid}
               >
                 {categories.map((cat) => (
                   <MenuItem key={cat.Id} value={cat.Id} style={{ fontFamily: 'inherit', textAlign: 'right' }}>
@@ -181,8 +221,14 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
                   </MenuItem>
                 ))}
               </Select>
+              {validationErrors.Categoryid && (
+                <Typography color="error" variant="body2" align="right">
+                  {validationErrors.Categoryid}
+                </Typography>
+              )}
             </FormControl>
 
+            {/* מצרכים */}
             <Typography variant="h6" align="center" sx={{ fontFamily: 'inherit' }}>
               מצרכים
             </Typography>
@@ -195,6 +241,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
                   fullWidth
                   InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
                   InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientName-${index}`]}
+                  helperText={validationErrors[`ingredientName-${index}`]}
                 />
                 <TextField
                   label="כמות"
@@ -203,6 +251,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
                   fullWidth
                   InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
                   InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientCount-${index}`]}
+                  helperText={validationErrors[`ingredientCount-${index}`]}
                 />
                 <TextField
                   label="סוג"
@@ -211,6 +261,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
                   fullWidth
                   InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
                   InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                  error={!!validationErrors[`ingredientType-${index}`]}
+                  helperText={validationErrors[`ingredientType-${index}`]}
                 />
               </Stack>
             ))}
@@ -218,6 +270,7 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
               הוסף מצרך
             </Button>
 
+            {/* הוראות הכנה */}
             <Typography variant="h6" align="center" sx={{ fontFamily: 'inherit' }}>
               הוראות הכנה
             </Typography>
@@ -232,6 +285,8 @@ const EditRecipe = ({ recipe, onSave, isDarkMode }: any) => {
                 rows={2}
                 InputLabelProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
                 InputProps={{ style: { fontFamily: 'inherit', textAlign: 'right' } }}
+                error={!!validationErrors[`instruction-${index}`]}
+                helperText={validationErrors[`instruction-${index}`]}
               />
             ))}
             <Button variant="contained" color="primary" onClick={addInstruction}>

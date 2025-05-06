@@ -1,5 +1,5 @@
-type IFormInputSignUp ={
-    Id: number
+export interface UserSignUp {
+    // Id: number
     Password: string,
     Name: string,
     UserName: string,
@@ -8,4 +8,12 @@ type IFormInputSignUp ={
     Tz: string,
 }
 
-export default IFormInputSignUp;
+export interface UserSignUpRes {
+    Id: number
+    Password: string,
+    Name: string,
+    UserName: string,
+    Phone: string,
+    Email: string,
+    Tz: string,
+}
