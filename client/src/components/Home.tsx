@@ -1,5 +1,3 @@
-"use client"
-
 import { Box, Typography, Grid, Paper, Button, Card, CardMedia, CardContent, Container, Divider } from "@mui/material"
 import { useNavigate } from "react-router-dom"
 import { useContext } from "react"

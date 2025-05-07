@@ -165,7 +165,7 @@ export default function Dashboard({ window }: { window?: () => Window }) {
                     </Box>
 
                     {/* תוכן הדף */}
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 2 }}>
+                    <Box >
                         <DemoPageContent pathname={router.pathname} />
                     </Box>
                 </DashboardLayout>

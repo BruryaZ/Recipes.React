@@ -1,5 +1,3 @@
-"use client"
-
 import {
   Card,
   CardContent,
@@ -47,7 +45,7 @@ const difficultyColors: Record<string, string> = {
   קשה: "#d32f2f",
 }
 
-const Recipe = ({ Id, title, date, image, description, method, difficulty, duration, ingredients, userId }: any) => {
+const Recipe = ({ Id, title, date, image, description, method, difficulty, duration, ingredients, userId , recipes, setRecipes}: any) => {
   const theme = useTheme()
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"))
   const navigate = useNavigate()
@@ -74,10 +72,13 @@ const Recipe = ({ Id, title, date, image, description, method, difficulty, durat
   const handleConfirmDelete = async () => {
     setOpenDeleteDialog(false)
     try {
-      const res = await axios.post<any>(`http://localhost:8080/api/recipe/delete/${Id}`)
-      console.log(res)
-      // Redirect or refresh after successful deletion
-      navigate("/recipes")
+      await axios.post<any>(`http://localhost:8080/api/recipe/delete/${Id}`)
+      
+      // מחיקת המתכון מה־state
+      setRecipes((prev: { Id: any }[]) => prev.filter(recipe => recipe.Id !== Id))
+  
+      // אם את רוצה, תוכלי גם לנווט
+      navigate("/")
     } catch (error) {
       console.log("שגיאה במחיקת המתכון:", error)
     }
@@ -101,6 +102,10 @@ const Recipe = ({ Id, title, date, image, description, method, difficulty, durat
         display: "flex",
         flexDirection: "column",
         backgroundColor: isDarkMode ? "#2d2d2d" : "#fff",
+        minWidth: "700px",
+        width: "100%",
+        justifyContent: "center",
+        mx: "auto",
       }}
       dir="rtl"
     >

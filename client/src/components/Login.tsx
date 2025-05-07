@@ -1,5 +1,3 @@
-"use client"
-
 import "../styles/global.css"
 import axios from "axios"
 import { useForm, type SubmitHandler } from "react-hook-form"

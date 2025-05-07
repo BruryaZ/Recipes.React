@@ -1,5 +1,3 @@
-"use client"
-
 import "../styles/global.css"
 import axios from "axios"
 import type RecipeType from "../repositories/RecipeType"
@@ -101,7 +99,7 @@ const Recipes = () => {
         createdByFilter !== "",
         searchTerm !== "",
     ].filter(Boolean).length
-
+    
     return (
         <Box
             sx={{
@@ -269,7 +267,22 @@ const Recipes = () => {
                     </Grid>
                 ) : (
                     filteredRecipes.map((recipe) => (
-                        <Grid item xs={12} key={recipe.Id}>
+                        <Grid
+                            item
+                            xs={12}
+                            sm={10}
+                            md={8}
+                            lg={6}
+                            key={recipe.Id}
+                            sx={{
+                                minWidth: "700px",
+                                maxWidth: "800px",
+                                width: "100%",
+                                display: "flex",
+                                justifyContent: "center",
+                                mx: "auto",
+                            }}
+                        >
                             <Recipe
                                 Id={recipe.Id}
                                 title={recipe.Name}
@@ -283,6 +296,8 @@ const Recipes = () => {
                                 categoryId={recipe.Categoryid}
                                 ingredients={recipe.Ingridents}
                                 instructions={recipe.Instructions}
+                                recipes= {recipes}
+                                setRecipes={setRecipes}
                             />
                         </Grid>
                     ))

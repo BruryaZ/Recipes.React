@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard'
 import EditRecipePage from './components/EditRecipePage'
 import AddRecipePage from './components/AddRecipePage'
 import Login from './components/Login'
+import { Home } from '@mui/icons-material'
 
 function App() {
 

@@ -1,16 +1,16 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Box, Container } from "@mui/material"
 import axios from "axios"
 import type { Category, Recipe } from "../repositories/RecipeType"
 import { useTheme } from "@mui/material/styles"
 import AddRecipe from "./AddRecipe"
+import { useNavigate } from "react-router-dom"
 
 const AddRecipePage = () => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === "dark"
   const [categories, setCategories] = useState<Category[]>([])
+  const nav = useNavigate()
 
   const emptyRecipe: Recipe = {
     Id: 0,
@@ -40,9 +40,8 @@ const AddRecipePage = () => {
     fetchCategories()
   }, [])
 
-  const handleSaveRecipe = (updatedRecipe: Recipe) => {
-    // Handle save logic
-    console.log("Recipe saved:", updatedRecipe)
+  const handleSaveRecipe = (updatedRecipe: Recipe) => {//todo
+    nav('/')
   }
 
   return (

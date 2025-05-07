@@ -1,7 +1,4 @@
-"use client"
-
-import type React from "react"
-
+import React from "react"
 import { useContext, useState } from "react"
 import {
   TextField,
@@ -26,6 +23,12 @@ import type { Category, Ingredient, Instruction, Recipe } from "../repositories/
 import { convertResRecipeToRecipeType, type ResRecipe } from "../repositories/ResRecipe"
 import { detailsContext } from "../context/Provider"
 import { useNavigate } from "react-router-dom"
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert, { AlertProps } from '@mui/material/Alert';
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const AddRecipe = ({
   recipe,
@@ -41,10 +44,32 @@ const AddRecipe = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const detailsContextProvider = useContext(detailsContext)
   const nav = useNavigate()
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
   const [addRecipe, setAddRecipe] = useState<Recipe>({
     ...recipe,
     Categoryid: recipe.Categoryid || (categories[0] ? categories[0].Id : 1),
   })
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    try {
+      addRecipe.UserId = detailsContextProvider.id;
+      addRecipe.Img = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60";
+      await axios.post<ResRecipe>("http://localhost:8080/api/recipe", addRecipe);
+      setSnackbarMessage('המתכון נוסף בהצלחה!');
+      setSnackbarSeverity('success');
+    } catch (error) {
+      console.log("שגיאה בשמירת מתכון:", error);
+      setSnackbarMessage('שגיאה בהוספת המתכון. אנא נסה שוב.');
+      setSnackbarSeverity('error');
+      nav("/");
+    } finally {
+      setSnackbarOpen(true);
+    }
+  };
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {}
@@ -83,7 +108,7 @@ const AddRecipe = ({
     field: string,
   ) => {
     const updatedIngredients = [...addRecipe.Ingridents]
-    ;(updatedIngredients[index] as any)[field] = e.target.value
+      ; (updatedIngredients[index] as any)[field] = e.target.value
     setAddRecipe((prev) => ({
       ...prev,
       Ingridents: updatedIngredients,
@@ -134,21 +159,6 @@ const AddRecipe = ({
         ...prev,
         Instructions: updatedInstructions,
       }))
-    }
-  }
-
-  const handleSave = async () => {
-    if (!validate()) return
-
-    try {
-      addRecipe.UserId = detailsContextProvider.id
-      addRecipe.Img =
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
-      const { data } = await axios.post<ResRecipe>("http://localhost:8080/api/recipe", addRecipe)
-      onSave(convertResRecipeToRecipeType(data))
-      nav("/recipes")
-    } catch (error) {
-      console.log("שגיאה בשמירת מתכון:", error)
     }
   }
 
@@ -443,6 +453,13 @@ const AddRecipe = ({
             >
               שמור מתכון
             </Button>
+
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
+              <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                {snackbarMessage}
+              </Alert>
+            </Snackbar>
+            
           </Stack>
         </CardContent>
       </Paper>

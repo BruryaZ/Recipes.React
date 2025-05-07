@@ -1,5 +1,3 @@
-"use client"
-
 import "../styles/global.css"
 import { Box, Typography, Paper, TextField, Button, Grid, useTheme } from "@mui/material"
 import {

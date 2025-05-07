@@ -12,6 +12,8 @@ Button {
 body {
     margin: 0;
     overflow-x: hidden;
+    background-color: #121212;
+
 }
 
 html,
@@ -26,4 +28,9 @@ body,
 input {
     direction: rtl;
     text-align: right;
+}
+
+#root,
+body {
+    background-color: #121212;
 }
